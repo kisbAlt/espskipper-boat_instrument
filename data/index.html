@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Boat instrument settings</title>
+</head>
+
+<body>
+    <h1 style="text-align: center;">Boat instrument settings</h1>
+    <p style="text-align: center;">On this page you can change the setting of the display.</p>
+    <div style="width: fit-content; margin-left: auto; margin-right: auto; margin-top: 50px;">
+
+
+        <div class="setting_div">
+            <span>Speed metrics</span>
+            <select name="speed" id="speed">
+                <option value="knots">Knots</option>
+                <option value="km">Kmph</option>
+
+            </select>
+        </div>
+        <div class="setting_div">
+            <span>Full refresh every</span>
+            <select name="fullref" id="fullref">
+                <option value="10">10s</option>
+                <option value="15">15s</option>
+                <option value="20">20s</option>
+                <option value="25">25s</option>
+                <option value="30">30s</option>
+                <option value="40">40s</option>
+                <option value="50">50s</option>
+                <option value="60">60s</option>
+            </select>
+        </div>
+    </div>
+    <p style="margin-left: auto; margin-right: auto; width: fit-content; cursor: pointer;
+    padding: 10px; background-color: green; border-radius: 7px; color: white;">Save</p>
+</body>
+<style>
+    select {
+        background-color: white;
+        border: 1px solid black;
+        border-radius: 3px;
+    }
+
+    .setting_div {
+        margin-top: 10px;
+        font-weight: bold;
+    }
+</style>
+
+</html>

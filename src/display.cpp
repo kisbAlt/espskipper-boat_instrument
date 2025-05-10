@@ -1,0 +1,152 @@
+#include <Arduino.h>
+#include <string.h> // Needed for strcpy
+#include <display.h>
+#define ENABLE_GxEPD2_GFX 0
+
+#include <Fonts/FreeMonoBold9pt7b.h>
+#include <Fonts/FreeMonoBold24pt7b.h>
+#include <Fonts/FreeMonoBold18pt7b.h>
+#include <Roboto_Medium_98.h>
+#include <GxEPD2_BW.h>
+
+DisplayHandler::DisplayHandler() : display(GxEPD2_420_GDEY042T81(/*CS=5*/ 5, /*DC=*/0, /*RES=*/2, /*BUSY=*/15))
+{
+    Serial.println("Constructor");
+}
+
+void DisplayHandler::Init()
+{
+    display.init(115200, true, 50, false);
+}
+
+void DisplayHandler::DrawUI(u_int32_t satellites, BoatStats stats)
+{
+    display.setRotation(1);
+    display.setTextColor(GxEPD_BLACK);
+    display.setFullWindow();
+    display.firstPage();
+    do
+    {
+        char maxBuf[10];
+        dtostrf(stats.maxSpeedKmph, 3, 1, maxBuf);
+
+        char avgBuf[10];
+        dtostrf(stats.maxSpeedKmph, 3, 1, avgBuf);
+
+        display.fillScreen(GxEPD_WHITE);
+        DrawUIBox();
+        DrawSmallText("AVG speed", 0, 0, false);
+        DrawSmallText("AVG sp. 1min", 155, 0, false);
+        DrawSmallText("MAX speed", 0, 63, false);
+        DrawSmallText("DISTANCE", 155, 67, false);
+
+        DrawMediumText("KM/H", 0, 125, true);
+
+        DrawLargeText(avgBuf, 30, 20, false);
+        DrawLargeText(maxBuf, 30, 82, false);
+
+        DrawLargeText("0.0", 182, 20, false);
+        DrawLargeText("0.0", 182, 82, false);
+
+        char satsBuf[10];
+        sprintf(satsBuf, "Sats: %d", satellites);
+        DrawSmallText(satsBuf, 0, 385, false);
+    } while (display.nextPage());
+}
+
+void DisplayHandler::DrawUIBox()
+{
+    display.drawLine(0, 130, display.width() - 1, 130, GxEPD_BLACK);
+    display.drawLine(0, 131, display.width() - 1, 131, GxEPD_BLACK);
+    display.drawLine(0, 129, display.width() - 1, 129, GxEPD_BLACK);
+
+    display.drawLine(0, 65, display.width() - 1, 65, GxEPD_BLACK);
+    display.drawLine(0, 66, display.width() - 1, 66, GxEPD_BLACK);
+    display.drawLine(0, 64, display.width() - 1, 64, GxEPD_BLACK);
+
+    display.drawLine(149, 0, 149, 129, GxEPD_BLACK);
+    display.drawLine(150, 0, 150, 129, GxEPD_BLACK);
+    display.drawLine(151, 0, 151, 129, GxEPD_BLACK);
+}
+
+void DisplayHandler::DrawSmallText(char text[], int16_t x, int16_t y, bool centerX)
+{
+    display.setFont(&FreeMonoBold9pt7b);
+    int16_t tbx, tby;
+    uint16_t tbw, tbh;
+    display.getTextBounds(text, 0, 0, &tbx, &tby, &tbw, &tbh);
+    if (centerX)
+    {
+        int16_t centerX = ((display.width() - tbw) / 2) - tbx;
+        display.setCursor(centerX, y + tbh);
+    }
+    else
+    {
+        display.setCursor(x, y + tbh);
+    }
+    display.print(text);
+}
+
+void DisplayHandler::DrawMediumText(char text[], int16_t x, int16_t y, bool centerX)
+{
+    display.setFont(&FreeMonoBold18pt7b);
+    int16_t tbx, tby;
+    uint16_t tbw, tbh;
+    display.getTextBounds(text, 0, 0, &tbx, &tby, &tbw, &tbh);
+    if (centerX)
+    {
+        int16_t centerX = ((display.width() - tbw) / 2) - tbx;
+        display.setCursor(centerX, y + tbh);
+    }
+    else
+    {
+        display.setCursor(x, y + tbh);
+    }
+    display.print(text);
+}
+
+void DisplayHandler::DrawLargeText(char text[], int16_t x, int16_t y, bool centerX)
+{
+    display.setFont(&FreeMonoBold24pt7b);
+    int16_t tbx, tby;
+    uint16_t tbw, tbh;
+    display.getTextBounds(text, 0, 0, &tbx, &tby, &tbw, &tbh);
+    if (centerX)
+    {
+        int16_t centerX = ((display.width() - tbw) / 2) - tbx;
+        display.setCursor(centerX, y + tbh);
+    }
+    else
+    {
+        display.setCursor(x, y + tbh);
+    }
+    display.print(text);
+}
+
+void DisplayHandler::DrawSpeed(double speed)
+{
+
+    Serial.println("Printing speed");
+    display.setRotation(1);
+    display.setFont(&Roboto_Medium_98);
+    display.setTextColor(GxEPD_BLACK);
+
+    char buffer[10]; // Make sure it's large enough for your number + null terminator
+    // itoa(speed, buffer, 10); // 10 = base (decimal)
+    dtostrf(speed, 3, 2, buffer);
+
+    int16_t tbx, tby;
+    uint16_t tbw, tbh;
+    display.getTextBounds(buffer, 0, 0, &tbx, &tby, &tbw, &tbh);
+    // center the bounding box by transposition of the origin:
+    uint16_t x = ((display.width() - tbw) / 2) - tbx;
+    uint16_t y = ((display.height() - tbh) / 2) - tby;
+
+    display.setPartialWindow(23, y + tby, 277, tbh);
+    display.firstPage();
+    display.setCursor(x, y);
+    do
+    {
+        display.print(buffer);
+    } while (display.nextPage());
+}
