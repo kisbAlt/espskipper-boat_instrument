@@ -73,7 +73,6 @@ void WifiHandler::HandleRequests(const DisplaySettings& dispSettings)
                             String settingsString = "knots:" + String(dispSettings.useKnots) + ";full:" + 
                             String(dispSettings.fullRefreshTime) + ";short:" + 
                             String(dispSettings.speedRefreshTime);
-
                             Serial.println("getting settings");
                             client.println(settingsString);
                         } else if (header.indexOf("GET /27/off") >= 0)
