@@ -1,7 +1,7 @@
 #include <display.h>
 class WifiHandler {
   private:
-
+    void SplitQuery(String query);
   public:
     WifiHandler();
     void Init();

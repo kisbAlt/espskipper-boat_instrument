@@ -20,7 +20,7 @@ void GpsHandler::Init()
     // Start Serial 2 with the defined RX and TX pins and a baud rate of 9600
     gpsSerial.end();
     gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
-    // gpsSerial.begin(9600);
+    
     Serial.println("Serial 2 started at 9600 baud rate");
 }
 

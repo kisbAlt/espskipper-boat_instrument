@@ -13,11 +13,9 @@ WiFiServer server(80);
 // Variable to store the HTTP request
 String header;
 
-
 extern const uint8_t index_html_start[] asm("_binary_data_index_html_start");
-extern const uint8_t index_html_end[]   asm("_binary_data_index_html_end");
+extern const uint8_t index_html_end[] asm("_binary_data_index_html_end");
 size_t html_len = 0;
-
 
 WifiHandler::WifiHandler()
 {
@@ -39,7 +37,7 @@ void WifiHandler::Init()
     MDNS.begin("set");
 }
 
-void WifiHandler::HandleRequests(const DisplaySettings& dispSettings)
+void WifiHandler::HandleRequests(const DisplaySettings &dispSettings)
 {
     WiFiClient client = server.available(); // Listen for incoming clients
 
@@ -70,16 +68,43 @@ void WifiHandler::HandleRequests(const DisplaySettings& dispSettings)
                         // turns the GPIOs on and off
                         if (header.indexOf("GET /settings") >= 0)
                         {
-                            String settingsString = "knots:" + String(dispSettings.useKnots) + ";full:" + 
-                            String(dispSettings.fullRefreshTime) + ";short:" + 
-                            String(dispSettings.speedRefreshTime);
+                            String settingsString = "knots:" + String(dispSettings.useKnots) + ";full:" +
+                                                    String(dispSettings.fullRefreshTime) + ";short:" +
+                                                    String(dispSettings.speedRefreshTime);
                             Serial.println("getting settings");
                             client.println(settingsString);
-                        } else if (header.indexOf("GET /27/off") >= 0)
+                        }
+                        else if (header.indexOf("GET /modify") >= 0)
                         {
-                            Serial.println("GPIO 27 off");
-                            client.println("27Off");
-                        }else {
+                            int startIndex = 0;
+                            while (startIndex >= 0)
+                            {
+                                int endIndex = header.indexOf('\n', startIndex);
+                                if (endIndex == -1)
+                                    endIndex = header.length(); // Last line
+
+                                String line = header.substring(startIndex, endIndex);
+
+                                // Check if line starts with keyword
+                                if (line.startsWith("GET"))
+                                {
+                                    if (line.indexOf("?") >= 0)
+                                    {
+                                        String queryString = line.substring(line.indexOf("?") + 1, line.indexOf(" HTTP/"));
+                                        Serial.println("QUERY: " + queryString);
+                                        SplitQuery(queryString);
+                                    }
+                                }
+
+                                startIndex = endIndex + 1;
+                                if (startIndex >= header.length())
+                                    break;
+                            }
+
+                            client.println("MODIFIED");
+                        }
+                        else
+                        {
                             client.write(index_html_start, html_len);
                         }
                         // The HTTP response ends with another blank line
@@ -105,4 +130,32 @@ void WifiHandler::HandleRequests(const DisplaySettings& dispSettings)
         Serial.println("Client disconnected.");
         Serial.println("");
     }
+}
+
+void WifiHandler::SplitQuery(String query)
+{
+    DisplaySettings local_disp;
+    int startIndex = 0;
+    int delimiterIndex;
+    bool lastParsed = false;
+
+    while (!lastParsed)
+    {
+        delimiterIndex = query.indexOf("&", startIndex);
+        if (delimiterIndex == -1) {
+            lastParsed = true;
+            delimiterIndex = query.length();
+        }
+
+        String token = query.substring(startIndex, delimiterIndex);
+        Serial.println("token: " + token);
+        String value_name = token.substring(0, token.indexOf("="));
+        String value = token.substring(token.indexOf("=")+1, token.length());
+        Serial.println("name: " + value_name);
+        Serial.println("value: " + value);
+        startIndex = delimiterIndex + 1;
+    }
+
+    // Print the last token (after the last delimiter)
+    String lastToken = query.substring(startIndex);
 }

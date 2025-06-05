@@ -10,31 +10,42 @@
     <h1 style="text-align: center;">Boat instrument settings</h1>
     <p style="text-align: center;">On this page you can change the setting of the display.</p>
     <div style="width: fit-content; margin-left: auto; margin-right: auto; margin-top: 50px;">
-
+        <p id="test">test</p>
 
         <div class="setting_div">
             <span>Speed metrics</span>
             <select name="speed" id="speed">
-                <option value="knots">Knots</option>
-                <option value="km">Kmph</option>
+                <option value="1">Knots</option>
+                <option value="0">Kmph</option>
 
             </select>
         </div>
         <div class="setting_div">
             <span>Full refresh every</span>
             <select name="fullref" id="fullref">
-                <option value="10">10s</option>
-                <option value="15">15s</option>
-                <option value="20">20s</option>
-                <option value="25">25s</option>
-                <option value="30">30s</option>
-                <option value="40">40s</option>
-                <option value="50">50s</option>
-                <option value="60">60s</option>
+                <option value="15000">15s</option>
+                <option value="10000">10s</option>
+                <option value="20000">20s</option>
+                <option value="25000">25s</option>
+                <option value="30000">30s</option>
+                <option value="40000">40s</option>
+                <option value="50000">50s</option>
+                <option value="60000">60s</option>
+            </select>
+        </div>
+        <div class="setting_div">
+            <span>Refresh speed every</span>
+            <select name="shortref" id="shortref">
+                <option value="500">500ms</option>
+                <option value="1000">1s</option>
+                <option value="2000">2s</option>
+                <option value="3000">3s</option>
+                <option value="4000">4s</option>
+                <option value="5000">5s</option>
             </select>
         </div>
     </div>
-    <p style="margin-left: auto; margin-right: auto; width: fit-content; cursor: pointer;
+    <p onclick="sendData()" style="margin-left: auto; margin-right: auto; width: fit-content; cursor: pointer;
     padding: 10px; background-color: green; border-radius: 7px; color: white;">Save</p>
 </body>
 <style>
@@ -49,5 +60,63 @@
         font-weight: bold;
     }
 </style>
+<script>
+    async function getData() {
+        //const url = "/settings";
+        const url = "http://192.168.4.1/settings"
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`);
+            }
+
+            const text = await response.text();
+            console.log(text)
+            document.getElementById("test").innerHTML = text;
+            setCurrent(text.trimEnd())
+        } catch (error) {
+            console.error(error.message);
+        }
+    }
+
+    function setCurrent(settings_text) {
+        let settings_split = settings_text.split(";")
+        settings_split.forEach(element => {
+            let settings_element = element.split(":")
+            switch (settings_element[0]) {
+                case "knots": {
+                    let html_el = document.getElementById("speed");
+                    html_el.value = settings_element[1]
+                    break;
+                }
+                case "full": {
+                    let html_el = document.getElementById("fullref");
+                    html_el.value = settings_element[1]
+                    break;
+                }
+                case "short": {
+                    let html_el = document.getElementById("shortref");
+                    html_el.value = settings_element[1]
+                    break;
+                }
+
+                default:
+                    break;
+            }
+        });
+    }
+
+    async function sendData() {
+        let speed = document.getElementById("speed").value;
+        let fullref = document.getElementById("fullref").value;
+        let shortref = document.getElementById("shortref").value;
+        //let url = `/modify?knots=${speed}&full=${fullref}&short=${shortref}`
+        let url = `http://192.168.4.1/modify?knots=${speed}&full=${fullref}&short=${shortref}`
+        console.log(url)
+        const response = await fetch(url);
+    }
+
+    getData();
+</script>
 
 </html>

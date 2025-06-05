@@ -23,6 +23,12 @@ void loop() {
   unsigned long now = millis();
 
   if (firstRun || now - lastDisplayUpdate >= dispHandler.dispSettings.fullRefreshTime) {
+    float temp_celsius = temperatureRead();
+
+    Serial.print("Temp onBoard ");
+    Serial.print(temp_celsius);
+    Serial.println("°C");
+    
     Serial.println("Redrawing UI");
     dispHandler.DrawUI(gpsHandler.lastNumOfSatellites, gpsHandler.stats);
     lastDisplayUpdate = now;
