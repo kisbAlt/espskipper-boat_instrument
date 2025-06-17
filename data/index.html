@@ -47,6 +47,9 @@
     </div>
     <p onclick="sendData()" style="margin-left: auto; margin-right: auto; width: fit-content; cursor: pointer;
     padding: 10px; background-color: green; border-radius: 7px; color: white;">Save</p>
+
+    <p onclick="resetData()" style="margin-left: auto; margin-right: auto; width: fit-content; cursor: pointer;
+    padding: 10px; background-color: orange; border-radius: 7px; color: white;">Reset</p>
 </body>
 <style>
     select {
@@ -62,8 +65,8 @@
 </style>
 <script>
     async function getData() {
-        //const url = "/settings";
-        const url = "http://192.168.4.1/settings"
+        const url = "/settings";
+        //const url = "http://192.168.4.1/settings"
         try {
             const response = await fetch(url);
             if (!response.ok) {
@@ -110,8 +113,15 @@
         let speed = document.getElementById("speed").value;
         let fullref = document.getElementById("fullref").value;
         let shortref = document.getElementById("shortref").value;
-        //let url = `/modify?knots=${speed}&full=${fullref}&short=${shortref}`
-        let url = `http://192.168.4.1/modify?knots=${speed}&full=${fullref}&short=${shortref}`
+        let url = `/modify?knots=${speed}&full=${fullref}&short=${shortref}`
+        //let url = `http://192.168.4.1/modify?knots=${speed}&full=${fullref}&short=${shortref}`
+        console.log(url)
+        const response = await fetch(url);
+    }
+
+        async function resetData() {
+        let url = `/reset`
+        //let url = `http://192.168.4.1/modify?knots=${speed}&full=${fullref}&short=${shortref}`
         console.log(url)
         const response = await fetch(url);
     }

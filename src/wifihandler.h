@@ -1,9 +1,9 @@
 #include <display.h>
 class WifiHandler {
   private:
-    void SplitQuery(String query);
+    void ParseAndUpdateSettings(String query, DisplaySettings& settings);
   public:
     WifiHandler();
     void Init();
-    void HandleRequests(const DisplaySettings& dispSettings);
+    void HandleRequests(DisplaySettings& dispSettings, BoatStats &boatStats);
 };

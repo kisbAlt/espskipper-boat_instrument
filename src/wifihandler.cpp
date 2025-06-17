@@ -37,7 +37,7 @@ void WifiHandler::Init()
     MDNS.begin("set");
 }
 
-void WifiHandler::HandleRequests(const DisplaySettings &dispSettings)
+void WifiHandler::HandleRequests(DisplaySettings &dispSettings, BoatStats &boatStats)
 {
     WiFiClient client = server.available(); // Listen for incoming clients
 
@@ -92,7 +92,7 @@ void WifiHandler::HandleRequests(const DisplaySettings &dispSettings)
                                     {
                                         String queryString = line.substring(line.indexOf("?") + 1, line.indexOf(" HTTP/"));
                                         Serial.println("QUERY: " + queryString);
-                                        SplitQuery(queryString);
+                                        ParseAndUpdateSettings(queryString, dispSettings);
                                     }
                                 }
 
@@ -102,6 +102,14 @@ void WifiHandler::HandleRequests(const DisplaySettings &dispSettings)
                             }
 
                             client.println("MODIFIED");
+                        }else if (header.indexOf("GET /reset") >= 0) {
+                            boatStats.avgSpeedKmph = 0;
+                            boatStats.avgSpeedKt = 0;
+                            boatStats.distance = 0;
+                            boatStats.maxSpeedKmph = 0;
+                            boatStats.maxSpeedKt = 0;
+                            boatStats.numberOfSamples = 1;
+                            client.println("RESET SUCCESSFUL");
                         }
                         else
                         {
@@ -132,17 +140,18 @@ void WifiHandler::HandleRequests(const DisplaySettings &dispSettings)
     }
 }
 
-void WifiHandler::SplitQuery(String query)
+void WifiHandler::ParseAndUpdateSettings(String query, DisplaySettings &settings)
 {
-    DisplaySettings local_disp;
     int startIndex = 0;
     int delimiterIndex;
     bool lastParsed = false;
+    int parsedCount = 0;
 
     while (!lastParsed)
     {
         delimiterIndex = query.indexOf("&", startIndex);
-        if (delimiterIndex == -1) {
+        if (delimiterIndex == -1)
+        {
             lastParsed = true;
             delimiterIndex = query.length();
         }
@@ -150,12 +159,29 @@ void WifiHandler::SplitQuery(String query)
         String token = query.substring(startIndex, delimiterIndex);
         Serial.println("token: " + token);
         String value_name = token.substring(0, token.indexOf("="));
-        String value = token.substring(token.indexOf("=")+1, token.length());
+        String value = token.substring(token.indexOf("=") + 1, token.length());
         Serial.println("name: " + value_name);
         Serial.println("value: " + value);
         startIndex = delimiterIndex + 1;
-    }
 
-    // Print the last token (after the last delimiter)
-    String lastToken = query.substring(startIndex);
+        if (value_name == "knots")
+        {
+            if (value == "1")
+            {
+                settings.useKnots = true;
+            }
+            else
+            {
+                settings.useKnots = false;
+            }
+        }
+        else if (value_name == "full")
+        {
+            settings.fullRefreshTime = value.toInt();
+        }
+        else if (value_name == "short")
+        {
+            settings.speedRefreshTime = value.toInt();
+        }
+    }
 }

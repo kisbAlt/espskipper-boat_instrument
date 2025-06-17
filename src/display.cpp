@@ -19,7 +19,11 @@ void DisplayHandler::Init()
     display.init(115200, true, 50, false);
 }
 
-void DisplayHandler::DrawUI(u_int32_t satellites, BoatStats stats)
+char maxBuf[10];
+char avgBuf[10];
+char distBuf[10];
+char courseBuf[4];
+void DisplayHandler::DrawUI(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings)
 {
     display.setRotation(1);
     display.setTextColor(GxEPD_BLACK);
@@ -27,26 +31,36 @@ void DisplayHandler::DrawUI(u_int32_t satellites, BoatStats stats)
     display.firstPage();
     do
     {
-        char maxBuf[10];
         dtostrf(stats.maxSpeedKmph, 3, 1, maxBuf);
 
-        char avgBuf[10];
-        dtostrf(stats.maxSpeedKmph, 3, 1, avgBuf);
+        dtostrf(stats.avgSpeedKmph, 3, 1, avgBuf);
+
+        dtostrf(stats.distance, 3, 1, distBuf);
+        
+        //itoa(stats.lastCourse, courseBuf, 10);
+        snprintf(courseBuf, sizeof(courseBuf), "%03d", stats.lastCourse);
 
         display.fillScreen(GxEPD_WHITE);
         DrawUIBox();
         DrawSmallText("AVG speed", 0, 0, false);
-        DrawSmallText("AVG sp. 1min", 155, 0, false);
+        DrawSmallText("COURSE", 155, 0, false);
         DrawSmallText("MAX speed", 0, 63, false);
         DrawSmallText("DISTANCE", 155, 67, false);
 
-        DrawMediumText("KM/H", 0, 125, true);
+        if (displaySettings.useKnots)
+        {
+            DrawMediumText("KNOTS", 0, 130, true);
+        }
+        else
+        {
+            DrawMediumText("KM/H", 0, 125, true);
+        }
 
-        DrawLargeText(avgBuf, 30, 20, false);
-        DrawLargeText(maxBuf, 30, 82, false);
+        DrawLargeText(avgBuf, 30, 20, false); // Drawing avg speed
+        DrawLargeText(maxBuf, 30, 82, false); // drawing max speed
 
-        DrawLargeText("0.0", 182, 20, false);
-        DrawLargeText("0.0", 182, 82, false);
+        DrawLargeText(courseBuf, 182, 20, false);
+        DrawLargeText(distBuf, 182, 82, false); // Drawing distance
 
         char satsBuf[10];
         sprintf(satsBuf, "Sats: %d", satellites);

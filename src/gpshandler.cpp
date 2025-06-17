@@ -12,7 +12,6 @@ HardwareSerial gpsSerial(2); // UART1
 
 GpsHandler::GpsHandler()
 {
-    avgNum = 1;
 }
 
 void GpsHandler::Init()
@@ -20,19 +19,21 @@ void GpsHandler::Init()
     // Start Serial 2 with the defined RX and TX pins and a baud rate of 9600
     gpsSerial.end();
     gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
-    
+
     Serial.println("Serial 2 started at 9600 baud rate");
 }
 
-void GpsHandler::RefreshStats() {
-    if (stats.lastSpeedKmph > stats.maxSpeedKmph) {
+void GpsHandler::RefreshStats()
+{
+    if (stats.lastSpeedKmph > stats.maxSpeedKmph)
+    {
         stats.maxSpeedKmph = stats.lastSpeedKmph;
         stats.maxSpeedKt = stats.lastSpeedKt;
     }
-    
-    stats.avgSpeedKt = stats.avgSpeedKt+ (stats.lastSpeedKt-stats.avgSpeedKt) / avgNum;
-    stats.avgSpeedKmph = stats.avgSpeedKmph+ (stats.lastSpeedKmph-stats.avgSpeedKmph) / avgNum;
-    avgNum++;
+
+    stats.avgSpeedKt = stats.avgSpeedKt + (stats.lastSpeedKt - stats.avgSpeedKt) / stats.numberOfSamples;
+    stats.avgSpeedKmph = stats.avgSpeedKmph + (stats.lastSpeedKmph - stats.avgSpeedKmph) / stats.numberOfSamples;
+    stats.numberOfSamples++;
 
     Serial.print("MaxKmph: ");
     Serial.println(stats.maxSpeedKmph);
@@ -54,13 +55,29 @@ void GpsHandler::GetGps()
         Serial.print("Speed km: ");
         Serial.println(gps.speed.kmph());
         Serial.println();
-        
+
+        if (stats.lastLat != 0)
+        {
+            stats.distance += gps.distanceBetween(stats.lastLat, stats.lastLng, gps.location.lat(), gps.location.lng())/1000;
+        }
+
         stats.lastSpeedKmph = gps.speed.kmph();
         stats.lastSpeedKt = gps.speed.knots();
         lastNumOfSatellites = gps.satellites.value();
         stats.lastLat = gps.location.lat();
         stats.lastLng = gps.location.lng();
         stats.lastCourse = gps.course.deg();
+
+        Serial.print("Lat: ");
+        Serial.println(stats.lastLat);
+        Serial.println();
+        Serial.print("Lon: ");
+        Serial.println(stats.lastLng);
+        Serial.println();
+        RefreshStats();
     }
-    RefreshStats();
+    else
+    {
+        Serial.println("GPS was not updated");
+    }
 }
