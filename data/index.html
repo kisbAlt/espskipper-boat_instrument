@@ -10,8 +10,6 @@
     <h1 style="text-align: center;">Boat instrument settings</h1>
     <p style="text-align: center;">On this page you can change the setting of the display.</p>
     <div style="width: fit-content; margin-left: auto; margin-right: auto; margin-top: 50px;">
-        <p id="test">test</p>
-
         <div class="setting_div">
             <span>Speed metrics</span>
             <select name="speed" id="speed">
@@ -42,6 +40,14 @@
                 <option value="3000">3s</option>
                 <option value="4000">4s</option>
                 <option value="5000">5s</option>
+            </select>
+        </div>
+        <div class="setting_div">
+            <span>Language</span>
+            <select name="lang" id="lang">
+                <option value="0">English</option>
+                <option value="1">Hungarian</option>
+
             </select>
         </div>
     </div>
@@ -75,7 +81,7 @@
 
             const text = await response.text();
             console.log(text)
-            document.getElementById("test").innerHTML = text;
+            //document.getElementById("test").innerHTML = text;
             setCurrent(text.trimEnd())
         } catch (error) {
             console.error(error.message);
@@ -86,6 +92,7 @@
         let settings_split = settings_text.split(";")
         settings_split.forEach(element => {
             let settings_element = element.split(":")
+            console.log(settings_element)
             switch (settings_element[0]) {
                 case "knots": {
                     let html_el = document.getElementById("speed");
@@ -102,6 +109,12 @@
                     html_el.value = settings_element[1]
                     break;
                 }
+                case "lang": {
+                    let html_el = document.getElementById("lang");
+                    html_el.value = settings_element[1]
+                    break;
+                }
+
 
                 default:
                     break;
@@ -113,15 +126,16 @@
         let speed = document.getElementById("speed").value;
         let fullref = document.getElementById("fullref").value;
         let shortref = document.getElementById("shortref").value;
-        let url = `/modify?knots=${speed}&full=${fullref}&short=${shortref}`
-        //let url = `http://192.168.4.1/modify?knots=${speed}&full=${fullref}&short=${shortref}`
+        let lang = document.getElementById("lang").value;
+        let url = `/modify?knots=${speed}&full=${fullref}&short=${shortref}&lang=${lang}`
+        //let url = `http://192.168.4.1/modify?knots=${speed}&full=${fullref}&short=${shortref}&lang=${lang}`
         console.log(url)
         const response = await fetch(url);
     }
 
-        async function resetData() {
+    async function resetData() {
         let url = `/reset`
-        //let url = `http://192.168.4.1/modify?knots=${speed}&full=${fullref}&short=${shortref}`
+        //let url = `http://192.168.4.1/reset`
         console.log(url)
         const response = await fetch(url);
     }

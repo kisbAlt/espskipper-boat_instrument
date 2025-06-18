@@ -8,6 +8,11 @@
 #include <Fonts/FreeMonoBold18pt7b.h>
 #include <Roboto_Medium_98.h>
 #include <GxEPD2_BW.h>
+#include <Preferences.h>
+
+Preferences preferences;
+const StringTranslations eng_strings = {"AVG speed", "COURSE", "MAX speed", "DISTANCE", "KM/H", "KNOTS", "Satellites"};
+const StringTranslations hu_strings = {"ATLAG", "IRANY", "MAXIMUM", "TAVOLSAG", "KM/H", "CSOMO", "muhold"};
 
 DisplayHandler::DisplayHandler() : display(GxEPD2_420_GDEY042T81(/*CS=5*/ 5, /*DC=*/0, /*RES=*/2, /*BUSY=*/15))
 {
@@ -16,6 +21,7 @@ DisplayHandler::DisplayHandler() : display(GxEPD2_420_GDEY042T81(/*CS=5*/ 5, /*D
 
 void DisplayHandler::Init()
 {
+    dispSettings.LoadData();
     display.init(115200, true, 50, false);
 }
 
@@ -29,6 +35,7 @@ void DisplayHandler::DrawUI(u_int32_t satellites, BoatStats stats, DisplaySettin
     display.setTextColor(GxEPD_BLACK);
     display.setFullWindow();
     display.firstPage();
+    StringTranslations texts = getLangTranslations();
     do
     {
         dtostrf(stats.maxSpeedKmph, 3, 1, maxBuf);
@@ -36,24 +43,24 @@ void DisplayHandler::DrawUI(u_int32_t satellites, BoatStats stats, DisplaySettin
         dtostrf(stats.avgSpeedKmph, 3, 1, avgBuf);
 
         dtostrf(stats.distance, 3, 1, distBuf);
-        
-        //itoa(stats.lastCourse, courseBuf, 10);
+
+        // itoa(stats.lastCourse, courseBuf, 10);
         snprintf(courseBuf, sizeof(courseBuf), "%03d", stats.lastCourse);
 
         display.fillScreen(GxEPD_WHITE);
         DrawUIBox();
-        DrawSmallText("AVG speed", 0, 0, false);
-        DrawSmallText("COURSE", 155, 0, false);
-        DrawSmallText("MAX speed", 0, 63, false);
-        DrawSmallText("DISTANCE", 155, 67, false);
+        DrawSmallText(texts.AvgSpeed, 0, 0, false);
+        DrawSmallText(texts.Course, 155, 0, false);
+        DrawSmallText(texts.MaxSpeed, 0, 63, false);
+        DrawSmallText(texts.Distance, 155, 67, false);
 
         if (displaySettings.useKnots)
         {
-            DrawMediumText("KNOTS", 0, 130, true);
+            DrawMediumText(texts.Knots, 0, 130, true);
         }
         else
         {
-            DrawMediumText("KM/H", 0, 125, true);
+            DrawMediumText(texts.Kmph, 0, 125, true);
         }
 
         DrawLargeText(avgBuf, 30, 20, false); // Drawing avg speed
@@ -62,9 +69,9 @@ void DisplayHandler::DrawUI(u_int32_t satellites, BoatStats stats, DisplaySettin
         DrawLargeText(courseBuf, 182, 20, false);
         DrawLargeText(distBuf, 182, 82, false); // Drawing distance
 
-        char satsBuf[10];
-        sprintf(satsBuf, "Sats: %d", satellites);
-        DrawSmallText(satsBuf, 0, 385, false);
+        char satsBuf[40];
+        sprintf(satsBuf, "SAT: %d 192.168.4.1 %d/%d", satellites, dispSettings.fullRefreshTime/1000, dispSettings.speedRefreshTime/1000);
+        DrawSmallText(satsBuf, 0, 382, false);
     } while (display.nextPage());
 }
 
@@ -145,7 +152,7 @@ void DisplayHandler::DrawSpeed(double speed)
     display.setFont(&Roboto_Medium_98);
     display.setTextColor(GxEPD_BLACK);
 
-    char buffer[10]; // Make sure it's large enough for your number + null terminator
+    char buffer[10];
     // itoa(speed, buffer, 10); // 10 = base (decimal)
     dtostrf(speed, 3, 2, buffer);
 
@@ -163,4 +170,60 @@ void DisplayHandler::DrawSpeed(double speed)
     {
         display.print(buffer);
     } while (display.nextPage());
+}
+
+StringTranslations DisplayHandler::getLangTranslations()
+{
+    if (dispSettings.language == ENGLISH)
+    {
+        return eng_strings;
+    }
+    else if (dispSettings.language == HUNGARIAN)
+    {
+        return hu_strings;
+    }
+    else
+    {
+        return eng_strings;
+    }
+}
+
+void DisplaySettings::SaveData()
+{
+    Serial.println("saving settings...");
+    preferences.begin("disp", false);
+
+    preferences.putBool("useKnots", useKnots);
+    preferences.putUInt("refresh1", fullRefreshTime);
+    preferences.putUInt("refresh2", speedRefreshTime);
+    preferences.putInt("language", static_cast<int>(language));
+
+    preferences.end();
+}
+
+void DisplaySettings::LoadData()
+{
+    Serial.println("loading settings...");
+    preferences.begin("disp", false);
+
+    if (preferences.isKey("useKnots"))
+    {
+        useKnots = preferences.getBool("useKnots", false);
+    }
+    if (preferences.isKey("refresh1"))
+    {
+        fullRefreshTime = preferences.getUInt("refresh1", false);
+        Serial.println("fullrefresh: ");
+        Serial.println(fullRefreshTime);
+    }
+    if (preferences.isKey("refresh2"))
+    {
+        speedRefreshTime = preferences.getUInt("refresh2", false);
+    }
+    if (preferences.isKey("language"))
+    {
+        language = static_cast<Language>(preferences.getInt("language", ENGLISH));
+    }
+
+    preferences.end();
 }

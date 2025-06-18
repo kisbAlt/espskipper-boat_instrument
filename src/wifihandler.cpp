@@ -70,7 +70,8 @@ void WifiHandler::HandleRequests(DisplaySettings &dispSettings, BoatStats &boatS
                         {
                             String settingsString = "knots:" + String(dispSettings.useKnots) + ";full:" +
                                                     String(dispSettings.fullRefreshTime) + ";short:" +
-                                                    String(dispSettings.speedRefreshTime);
+                                                    String(dispSettings.speedRefreshTime)+ ";lang:" +
+                                                    String(dispSettings.language);
                             Serial.println("getting settings");
                             client.println(settingsString);
                         }
@@ -100,7 +101,7 @@ void WifiHandler::HandleRequests(DisplaySettings &dispSettings, BoatStats &boatS
                                 if (startIndex >= header.length())
                                     break;
                             }
-
+                            dispSettings.SaveData();
                             client.println("MODIFIED");
                         }else if (header.indexOf("GET /reset") >= 0) {
                             boatStats.avgSpeedKmph = 0;
@@ -182,6 +183,9 @@ void WifiHandler::ParseAndUpdateSettings(String query, DisplaySettings &settings
         else if (value_name == "short")
         {
             settings.speedRefreshTime = value.toInt();
+        }else if (value_name == "lang")
+        {
+            settings.language = static_cast<Language>(value.toInt());
         }
     }
 }

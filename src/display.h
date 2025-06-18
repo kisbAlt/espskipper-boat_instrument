@@ -1,11 +1,29 @@
 #include <GxEPD2_BW.h>
 #include <gpshandler.h>
 
+enum Language {
+  ENGLISH = 0,
+  HUNGARIAN = 1
+};
+
 struct DisplaySettings
 {
   bool useKnots = false;
   u_int32_t fullRefreshTime = 30000;
   u_int16_t speedRefreshTime = 2000;
+  Language language = HUNGARIAN;
+  void SaveData();
+  void LoadData();
+};
+
+struct StringTranslations {
+  char AvgSpeed[15];
+  char Course[15];
+  char MaxSpeed[15];
+  char Distance[15];
+  char Kmph[15];
+  char Knots[15];
+  char Satellites[15];
 };
 
 class DisplayHandler
@@ -16,6 +34,7 @@ private:
   void DrawMediumText(char text[], int16_t x, int16_t y, bool centerX);
   void DrawSmallText(char text[], int16_t x, int16_t y, bool centerX);
   void DrawUIBox();
+  StringTranslations getLangTranslations();
 
 public:
   DisplayHandler();

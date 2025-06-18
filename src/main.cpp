@@ -23,7 +23,7 @@ void setup()
   dispHandler.Init();
   gpsHandler.Init();
   delay(1000);
-  findFirstGps();
+  //findFirstGps();
 
   wifiHandler.Init();
   
