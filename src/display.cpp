@@ -7,6 +7,7 @@
 #include <Fonts/FreeMonoBold24pt7b.h>
 #include <Fonts/FreeMonoBold18pt7b.h>
 #include <Roboto_Medium_98.h>
+#include <DejaVu_Sans_Mono_98.h>
 #include <GxEPD2_BW.h>
 #include <Preferences.h>
 
@@ -162,24 +163,34 @@ void DisplayHandler::DrawLargeText(char text[], int16_t x, int16_t y, bool cente
 
 void DisplayHandler::DrawSpeed(double speed)
 {
-
     Serial.println("Printing speed");
-    display.setRotation(1);
-    display.setFont(&Roboto_Medium_98);
-    display.setTextColor(GxEPD_BLACK);
 
     char buffer[10];
     // itoa(speed, buffer, 10); // 10 = base (decimal)
-    dtostrf(speed, 3, 2, buffer);
+    dtostrf(speed, 3, 1, buffer);
+
+    if (buffer == lastBuffer) {
+        return;
+    }
+
+    display.setRotation(1);
+    display.setFont(&DejaVu_Sans_Mono_98);
+    display.setTextColor(GxEPD_BLACK);
+
 
     int16_t tbx, tby;
     uint16_t tbw, tbh;
     display.getTextBounds(buffer, 0, 0, &tbx, &tby, &tbw, &tbh);
     // center the bounding box by transposition of the origin:
-    uint16_t x = ((display.width() - tbw) / 2) - tbx;
+    uint16_t x;
     uint16_t y = 320;
-
-    display.setPartialWindow(23, y + tby, 277, tbh);
+    if (speed < 10) {
+        x = 67;
+    } else {
+        x = 39;
+    }
+    Serial.println(tbw);
+    display.setPartialWindow(39, y + tby, 240, tbh);
     display.firstPage();
     display.setCursor(x, y);
     do

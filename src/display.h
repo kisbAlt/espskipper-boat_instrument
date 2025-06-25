@@ -37,6 +37,7 @@ private:
   void DrawSmallText(char text[], int16_t x, int16_t y, bool centerX);
   void DrawUIBox();
   StringTranslations getLangTranslations();
+  char lastBuffer[10];
 
 public:
   DisplayHandler();

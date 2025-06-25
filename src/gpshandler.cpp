@@ -111,7 +111,7 @@ bool GpsHandler::GetGps()
     }
     else
     {
-        Serial.println("GPS was not updated");
+        //Serial.println("GPS was not updated");
         return false;
     }
 }
