@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <string.h> // Needed for strcpy
+#include <string.h>
 #include <display.h>
 #define ENABLE_GxEPD2_GFX 0
 
@@ -11,8 +11,8 @@
 #include <Preferences.h>
 
 Preferences preferences;
-const StringTranslations eng_strings = {"AVG speed", "COURSE", "MAX speed", "DISTANCE", "KM/H", "KNOTS", "Satellites"};
-const StringTranslations hu_strings = {"ATLAG", "IRANY", "MAXIMUM", "TAVOLSAG", "KM/H", "CSOMO", "muhold"};
+const StringTranslations eng_strings = {"AVG speed", "COURSE", "MAX speed", "DISTANCE", "KM/H", "KNOTS", "Satellites", "TEMP", "DEPTH"};
+const StringTranslations hu_strings = {"ATLAG", "IRANY", "MAXIMUM", "TAVOLSAG", "KM/H", "CSOMO", "muhold", "HOFOK", "MELYSEG"};
 
 DisplayHandler::DisplayHandler() : display(GxEPD2_420_GDEY042T81(/*CS=5*/ 5, /*DC=*/0, /*RES=*/2, /*BUSY=*/15))
 {
@@ -29,6 +29,8 @@ char maxBuf[10];
 char avgBuf[10];
 char distBuf[10];
 char courseBuf[4];
+char depthBuf[4];
+char tempBuf[4];
 void DisplayHandler::DrawUI(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings)
 {
     display.setRotation(1);
@@ -44,6 +46,9 @@ void DisplayHandler::DrawUI(u_int32_t satellites, BoatStats stats, DisplaySettin
 
         dtostrf(stats.distance, 3, 1, distBuf);
 
+        dtostrf(0, 3, 1, tempBuf);
+        dtostrf(0, 3, 1, depthBuf);
+
         // itoa(stats.lastCourse, courseBuf, 10);
         snprintf(courseBuf, sizeof(courseBuf), "%03d", stats.lastCourse);
 
@@ -51,16 +56,19 @@ void DisplayHandler::DrawUI(u_int32_t satellites, BoatStats stats, DisplaySettin
         DrawUIBox();
         DrawSmallText(texts.AvgSpeed, 0, 0, false);
         DrawSmallText(texts.Course, 155, 0, false);
-        DrawSmallText(texts.MaxSpeed, 0, 63, false);
+        DrawSmallText(texts.MaxSpeed, 0, 67, false);
         DrawSmallText(texts.Distance, 155, 67, false);
+
+        DrawSmallText(texts.WaterTemp, 0, 134, false);
+        DrawSmallText(texts.Depth, 155, 134, false);
 
         if (displaySettings.useKnots)
         {
-            DrawMediumText(texts.Knots, 0, 130, true);
+            DrawMediumText(texts.Knots, 0, 195, true);
         }
         else
         {
-            DrawMediumText(texts.Kmph, 0, 125, true);
+            DrawMediumText(texts.Kmph, 0, 195, true);
         }
 
         DrawLargeText(avgBuf, 30, 20, false); // Drawing avg speed
@@ -69,8 +77,12 @@ void DisplayHandler::DrawUI(u_int32_t satellites, BoatStats stats, DisplaySettin
         DrawLargeText(courseBuf, 182, 20, false);
         DrawLargeText(distBuf, 182, 82, false); // Drawing distance
 
+        DrawLargeText(tempBuf, 30, 149, false); // drawing water temp
+        DrawLargeText(depthBuf, 182, 149, false); // Drawing depth
+
         char satsBuf[40];
-        sprintf(satsBuf, "SAT: %d 192.168.4.1 %d/%d", satellites, dispSettings.fullRefreshTime/1000, dispSettings.speedRefreshTime/1000);
+        int temp_celsius = round(temperatureRead());
+        sprintf(satsBuf, "S%d 192.168.4.1 %d/%d %dC", satellites, dispSettings.fullRefreshTime/1000, dispSettings.speedRefreshTime/1000, temp_celsius);
         DrawSmallText(satsBuf, 0, 382, false);
     } while (display.nextPage());
 }
@@ -85,9 +97,13 @@ void DisplayHandler::DrawUIBox()
     display.drawLine(0, 66, display.width() - 1, 66, GxEPD_BLACK);
     display.drawLine(0, 64, display.width() - 1, 64, GxEPD_BLACK);
 
-    display.drawLine(149, 0, 149, 129, GxEPD_BLACK);
-    display.drawLine(150, 0, 150, 129, GxEPD_BLACK);
-    display.drawLine(151, 0, 151, 129, GxEPD_BLACK);
+    display.drawLine(0, 195, display.width() - 1, 195, GxEPD_BLACK);
+    display.drawLine(0, 196, display.width() - 1, 196, GxEPD_BLACK);
+    display.drawLine(0, 194, display.width() - 1, 194, GxEPD_BLACK);
+
+    display.drawLine(149, 0, 149, 194, GxEPD_BLACK);
+    display.drawLine(150, 0, 150, 194, GxEPD_BLACK);
+    display.drawLine(151, 0, 151, 194, GxEPD_BLACK);
 }
 
 void DisplayHandler::DrawSmallText(char text[], int16_t x, int16_t y, bool centerX)
@@ -161,7 +177,7 @@ void DisplayHandler::DrawSpeed(double speed)
     display.getTextBounds(buffer, 0, 0, &tbx, &tby, &tbw, &tbh);
     // center the bounding box by transposition of the origin:
     uint16_t x = ((display.width() - tbw) / 2) - tbx;
-    uint16_t y = ((display.height() - tbh) / 2) - tby;
+    uint16_t y = 320;
 
     display.setPartialWindow(23, y + tby, 277, tbh);
     display.firstPage();

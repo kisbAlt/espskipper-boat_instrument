@@ -104,12 +104,7 @@ void WifiHandler::HandleRequests(DisplaySettings &dispSettings, BoatStats &boatS
                             dispSettings.SaveData();
                             client.println("MODIFIED");
                         }else if (header.indexOf("GET /reset") >= 0) {
-                            boatStats.avgSpeedKmph = 0;
-                            boatStats.avgSpeedKt = 0;
-                            boatStats.distance = 0;
-                            boatStats.maxSpeedKmph = 0;
-                            boatStats.maxSpeedKt = 0;
-                            boatStats.numberOfSamples = 1;
+                            boatStats.Reset();
                             client.println("RESET SUCCESSFUL");
                         }
                         else

@@ -4,11 +4,27 @@
 
 TinyGPSPlus gps;
 HardwareSerial gpsSerial(2); // UART1
+const float alpha = 0.1;
 
 // Define the RX and TX pins
 #define RXD2 16
 #define TXD2 17
 #define GPS_BAUD 9600
+
+const float DISTANCE_THRESHOLD = 1.0; // meters
+
+float haversine(float lat1, float lon1, float lat2, float lon2)
+{
+    const float R = 6371000; // Earth radius in meters
+    float dLat = radians(lat2 - lat1);
+    float dLon = radians(lon2 - lon1);
+
+    float a = sin(dLat / 2) * sin(dLat / 2) +
+              cos(radians(lat1)) * cos(radians(lat2)) *
+                  sin(dLon / 2) * sin(dLon / 2);
+    float c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    return R * c;
+}
 
 GpsHandler::GpsHandler()
 {
@@ -40,7 +56,7 @@ void GpsHandler::RefreshStats()
     Serial.println();
 }
 
-void GpsHandler::GetGps()
+bool GpsHandler::GetGps()
 {
     while (gpsSerial.available())
     {
@@ -58,11 +74,27 @@ void GpsHandler::GetGps()
 
         if (stats.lastLat != 0)
         {
-            stats.distance += gps.distanceBetween(stats.lastLat, stats.lastLng, gps.location.lat(), gps.location.lng())/1000;
+            float d = haversine(stats.lastLat, stats.lastLng, gps.location.lat(), gps.location.lng());
+            if (d > DISTANCE_THRESHOLD)
+            {
+                stats.distance += d / 1000;
+            }
         }
 
-        stats.lastSpeedKmph = gps.speed.kmph();
-        stats.lastSpeedKt = gps.speed.knots();
+        if (firstRun)
+        {
+            stats.lastSpeedKmph = gps.speed.kmph();
+            stats.lastSpeedKt = gps.speed.knots();
+            firstRun = false;
+        }
+        else
+        {
+            stats.lastSpeedKmph = alpha * gps.speed.kmph() + (1 - alpha) * stats.lastSpeedKmph;
+            stats.lastSpeedKt = alpha * gps.speed.knots() + (1 - alpha) * stats.lastSpeedKt;
+        }
+
+        // stats.lastSpeedKmph = gps.speed.kmph();
+        // stats.lastSpeedKt = gps.speed.knots();
         lastNumOfSatellites = gps.satellites.value();
         stats.lastLat = gps.location.lat();
         stats.lastLng = gps.location.lng();
@@ -75,9 +107,11 @@ void GpsHandler::GetGps()
         Serial.println(stats.lastLng);
         Serial.println();
         RefreshStats();
+        return true;
     }
     else
     {
         Serial.println("GPS was not updated");
+        return false;
     }
 }

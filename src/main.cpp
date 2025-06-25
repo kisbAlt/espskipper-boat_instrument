@@ -5,15 +5,15 @@ DisplayHandler dispHandler;
 GpsHandler gpsHandler;
 WifiHandler wifiHandler;
 
-void findFirstGps() {
-  
-  while (gpsHandler.stats.lastLat == 0){
+void findFirstGps()
+{
+
+  while (gpsHandler.stats.lastLat == 0)
+  {
     gpsHandler.GetGps();
     delay(500);
     Serial.println("cant find gps...");
   }
-  
-  
 }
 
 void setup()
@@ -23,16 +23,15 @@ void setup()
   dispHandler.Init();
   gpsHandler.Init();
   delay(1000);
-  //findFirstGps();
+  // findFirstGps();
 
   wifiHandler.Init();
-  
-
 }
 
-unsigned long lastGpsPoll = 0;
+unsigned long lastSpeedUpdate = 0;
 unsigned long lastDisplayUpdate = 0;
 bool firstRun = true;
+bool gpsWasRefreshed = false;
 
 void loop()
 {
@@ -40,20 +39,17 @@ void loop()
 
   if (firstRun || now - lastDisplayUpdate >= dispHandler.dispSettings.fullRefreshTime)
   {
-    float temp_celsius = temperatureRead();
-
-    Serial.print("Temp onBoard ");
-    Serial.print(temp_celsius);
-    Serial.println("°C");
-
     Serial.println("Redrawing UI");
     dispHandler.DrawUI(gpsHandler.lastNumOfSatellites, gpsHandler.stats, dispHandler.dispSettings);
     lastDisplayUpdate = now;
   }
 
-  if (firstRun || now - lastGpsPoll >= dispHandler.dispSettings.speedRefreshTime)
+  if (gpsHandler.GetGps()) {
+    gpsWasRefreshed = true;
+  }
+
+  if (gpsWasRefreshed && (firstRun || now - lastSpeedUpdate >= dispHandler.dispSettings.speedRefreshTime))
   {
-    gpsHandler.GetGps();
     if (dispHandler.dispSettings.useKnots)
     {
       dispHandler.DrawSpeed(gpsHandler.stats.lastSpeedKt);
@@ -62,12 +58,14 @@ void loop()
     {
       dispHandler.DrawSpeed(gpsHandler.stats.lastSpeedKmph);
     }
-    lastGpsPoll = now;
+    lastSpeedUpdate = now;
+    gpsWasRefreshed = false;
   }
 
   if (firstRun)
   {
     firstRun = false;
   }
+  
   wifiHandler.HandleRequests(dispHandler.dispSettings, gpsHandler.stats);
 }

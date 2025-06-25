@@ -24,6 +24,8 @@ struct StringTranslations {
   char Kmph[15];
   char Knots[15];
   char Satellites[15];
+  char WaterTemp[15];
+  char Depth[15];
 };
 
 class DisplayHandler
