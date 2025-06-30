@@ -37,7 +37,7 @@ void WifiHandler::Init()
     MDNS.begin("set");
 }
 
-void WifiHandler::HandleRequests(DisplaySettings &dispSettings, BoatStats &boatStats)
+void WifiHandler::HandleRequests(DisplaySettings &dispSettings, BoatStats &boatStats, bool* requestDisplayUpdate)
 {
     WiFiClient client = server.available(); // Listen for incoming clients
 
@@ -102,6 +102,7 @@ void WifiHandler::HandleRequests(DisplaySettings &dispSettings, BoatStats &boatS
                                     break;
                             }
                             dispSettings.SaveData();
+                            *requestDisplayUpdate = true;
                             client.println("MODIFIED");
                         }else if (header.indexOf("GET /reset") >= 0) {
                             boatStats.Reset();

@@ -9,6 +9,7 @@ enum Language {
 struct DisplaySettings
 {
   bool useKnots = false;
+  bool coursePartialUpdate = true;
   u_int32_t fullRefreshTime = 30000;
   u_int16_t speedRefreshTime = 2000;
   Language language = HUNGARIAN;
@@ -38,6 +39,7 @@ private:
   void DrawUIBox();
   StringTranslations getLangTranslations();
   char lastBuffer[10];
+  u_int16_t lastCourse = 0;
 
 public:
   DisplayHandler();
@@ -45,4 +47,5 @@ public:
   void Init();
   void DrawUI(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings);
   void DrawSpeed(double speed);
+  void PartialCourse(u_int16_t course);
 };

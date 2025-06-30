@@ -30,14 +30,14 @@ void setup()
 
 unsigned long lastSpeedUpdate = 0;
 unsigned long lastDisplayUpdate = 0;
-bool firstRun = true;
+bool forceFullRefresh = true;
 bool gpsWasRefreshed = false;
 
 void loop()
 {
   unsigned long now = millis();
 
-  if (firstRun || now - lastDisplayUpdate >= dispHandler.dispSettings.fullRefreshTime)
+  if (forceFullRefresh || now - lastDisplayUpdate >= dispHandler.dispSettings.fullRefreshTime)
   {
     Serial.println("Redrawing UI");
     dispHandler.DrawUI(gpsHandler.lastNumOfSatellites, gpsHandler.stats, dispHandler.dispSettings);
@@ -48,7 +48,7 @@ void loop()
     gpsWasRefreshed = true;
   }
 
-  if (gpsWasRefreshed && (firstRun || now - lastSpeedUpdate >= dispHandler.dispSettings.speedRefreshTime))
+  if (gpsWasRefreshed && (forceFullRefresh || now - lastSpeedUpdate >= dispHandler.dispSettings.speedRefreshTime))
   {
     if (dispHandler.dispSettings.useKnots)
     {
@@ -58,14 +58,18 @@ void loop()
     {
       dispHandler.DrawSpeed(gpsHandler.stats.lastSpeedKmph);
     }
+    if (dispHandler.dispSettings.coursePartialUpdate) {
+      Serial.println(gpsHandler.stats.lastCourse);
+      dispHandler.PartialCourse(gpsHandler.stats.lastCourse);
+    }
     lastSpeedUpdate = now;
     gpsWasRefreshed = false;
   }
 
-  if (firstRun)
+  if (forceFullRefresh)
   {
-    firstRun = false;
+    forceFullRefresh = false;
   }
   
-  wifiHandler.HandleRequests(dispHandler.dispSettings, gpsHandler.stats);
+  wifiHandler.HandleRequests(dispHandler.dispSettings, gpsHandler.stats, &forceFullRefresh);
 }

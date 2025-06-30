@@ -177,11 +177,10 @@ void DisplayHandler::DrawSpeed(double speed)
     display.setFont(&DejaVu_Sans_Mono_98);
     display.setTextColor(GxEPD_BLACK);
 
-
     int16_t tbx, tby;
     uint16_t tbw, tbh;
     display.getTextBounds(buffer, 0, 0, &tbx, &tby, &tbw, &tbh);
-    // center the bounding box by transposition of the origin:
+
     uint16_t x;
     uint16_t y = 320;
     if (speed < 10) {
@@ -189,7 +188,6 @@ void DisplayHandler::DrawSpeed(double speed)
     } else {
         x = 39;
     }
-    Serial.println(tbw);
     display.setPartialWindow(39, y + tby, 240, tbh);
     display.firstPage();
     display.setCursor(x, y);
@@ -198,6 +196,39 @@ void DisplayHandler::DrawSpeed(double speed)
         display.print(buffer);
     } while (display.nextPage());
 }
+
+void DisplayHandler::PartialCourse(u_int16_t course)
+{
+    Serial.println("Printing course: ");
+    Serial.print(course);
+    Serial.println();
+
+    char courseBufPartial[4];
+    snprintf(courseBufPartial, sizeof(courseBufPartial), "%03d", lastCourse);
+    lastCourse = lastCourse+1;
+    display.setRotation(1);
+    
+    display.setFont(&FreeMonoBold9pt7b);
+    display.setTextColor(GxEPD_BLACK);
+
+    int16_t tbx, tby;
+    uint16_t tbw, tbh;
+    display.getTextBounds(courseBufPartial, 0, 0, &tbx, &tby, &tbw, &tbh);
+
+    Serial.println("course tbw: ");
+    Serial.println(tbw);
+
+    uint16_t x = 182;
+    uint16_t y = 20;
+    display.setPartialWindow(155, y + tby, tbw, tbh);
+    display.firstPage();
+    display.setCursor(x, y);
+    do
+    {
+        display.print(courseBufPartial);
+    } while (display.nextPage());
+}
+
 
 StringTranslations DisplayHandler::getLangTranslations()
 {

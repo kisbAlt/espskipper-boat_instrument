@@ -5,5 +5,5 @@ class WifiHandler {
   public:
     WifiHandler();
     void Init();
-    void HandleRequests(DisplaySettings& dispSettings, BoatStats &boatStats);
+    void HandleRequests(DisplaySettings& dispSettings, BoatStats &boatStats, bool* requestDisplayUpdate);
 };

@@ -75,7 +75,7 @@ bool GpsHandler::GetGps()
         if (stats.lastLat != 0)
         {
             float d = haversine(stats.lastLat, stats.lastLng, gps.location.lat(), gps.location.lng());
-            if (d > DISTANCE_THRESHOLD)
+            if (d > DISTANCE_THRESHOLD && d/1000 < 0.5)
             {
                 stats.distance += d / 1000;
             }
@@ -105,6 +105,9 @@ bool GpsHandler::GetGps()
         Serial.println();
         Serial.print("Lon: ");
         Serial.println(stats.lastLng);
+        Serial.println();
+        Serial.print("couse inner: ");
+        Serial.println(gps.course.deg());
         Serial.println();
         RefreshStats();
         return true;
