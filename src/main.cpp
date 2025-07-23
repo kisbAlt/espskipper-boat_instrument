@@ -48,15 +48,15 @@ void loop()
     gpsWasRefreshed = true;
   }
 
-  if (gpsWasRefreshed && (forceFullRefresh || now - lastSpeedUpdate >= dispHandler.dispSettings.speedRefreshTime))
+  if (true && (forceFullRefresh || now - lastSpeedUpdate >= dispHandler.dispSettings.speedRefreshTime))
   {
     if (dispHandler.dispSettings.useKnots)
     {
-      dispHandler.DrawSpeed(gpsHandler.stats.lastSpeedKt);
+      dispHandler.DrawSpeed(gpsHandler.stats.lastSpeedKt, gpsHandler.lastNumOfSatellites);
     }
     else
     {
-      dispHandler.DrawSpeed(gpsHandler.stats.lastSpeedKmph);
+      dispHandler.DrawSpeed(gpsHandler.stats.lastSpeedKmph, gpsHandler.lastNumOfSatellites);
     }
     if (dispHandler.dispSettings.coursePartialUpdate) {
       Serial.println(gpsHandler.stats.lastCourse);

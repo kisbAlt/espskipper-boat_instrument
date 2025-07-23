@@ -37,6 +37,7 @@ void WifiHandler::Init()
     MDNS.begin("set");
 }
 
+
 void WifiHandler::HandleRequests(DisplaySettings &dispSettings, BoatStats &boatStats, bool* requestDisplayUpdate)
 {
     WiFiClient client = server.available(); // Listen for incoming clients

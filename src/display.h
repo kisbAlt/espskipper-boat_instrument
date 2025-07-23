@@ -1,5 +1,7 @@
-#include <GxEPD2_BW.h>
+
 #include <gpshandler.h>
+#include <U8g2lib.h>
+
 
 enum Language {
   ENGLISH = 0,
@@ -32,20 +34,25 @@ struct StringTranslations {
 class DisplayHandler
 {
 private:
-  GxEPD2_BW<GxEPD2_420_GDEY042T81, GxEPD2_420_GDEY042T81::HEIGHT> display;
+  U8G2_ST7920_128X64_F_SW_SPI display1;
+  U8G2_ST7920_128X64_F_SW_SPI display2;
   void DrawLargeText(char text[], int16_t x, int16_t y, bool centerX);
   void DrawMediumText(char text[], int16_t x, int16_t y, bool centerX);
   void DrawSmallText(char text[], int16_t x, int16_t y, bool centerX);
   void DrawUIBox();
+  void PrepareDraw();
+  void DrawDisplay1();
   StringTranslations getLangTranslations();
   char lastBuffer[10];
   u_int16_t lastCourse = 0;
+  char satsBuf[40];
+  bool prepared = false;
 
 public:
   DisplayHandler();
   DisplaySettings dispSettings;
   void Init();
   void DrawUI(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings);
-  void DrawSpeed(double speed);
+  void DrawSpeed(double speed, u_int32_t satellites);
   void PartialCourse(u_int16_t course);
 };
