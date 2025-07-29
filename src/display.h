@@ -12,8 +12,8 @@ struct DisplaySettings
 {
   bool useKnots = false;
   bool coursePartialUpdate = true;
-  u_int32_t fullRefreshTime = 30000;
-  u_int16_t speedRefreshTime = 2000;
+  u_int32_t fullRefreshTime = 2000;
+  u_int16_t speedRefreshTime = 1000;
   Language language = HUNGARIAN;
   void SaveData();
   void LoadData();
@@ -53,6 +53,6 @@ public:
   DisplaySettings dispSettings;
   void Init();
   void DrawUI(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings);
-  void DrawSpeed(double speed, u_int32_t satellites);
+  void DrawSpeed(double speed);
   void PartialCourse(u_int16_t course);
 };

@@ -73,63 +73,33 @@ void DisplayHandler::DrawUI(u_int32_t satellites, BoatStats stats, DisplaySettin
     display2.drawStr(44,32, texts.WaterTemp);
     display2.drawStr(86,32, texts.Depth);
 
+    display2.setFont(u8g2_font_logisoso16_tn);
+
+    // Writing stat datas to buffers
+    dtostrf(stats.maxSpeedKmph, 3, 1, maxBuf);
+    dtostrf(stats.avgSpeedKmph, 3, 1, avgBuf);
+    dtostrf(stats.distance, 3, 1, distBuf);
+    dtostrf(0, 3, 1, tempBuf);
+    dtostrf(0, 3, 1, depthBuf);
+    
+    snprintf(courseBuf, sizeof(courseBuf), "%03d", stats.lastCourse);
+
+
+    // drawing buffers to screen
+    display2.drawStr(0,10, avgBuf);
+    display2.drawStr(44,10, courseBuf);
+    display2.drawStr(86,10, maxBuf);
+
+    display2.drawStr(0,42, distBuf);
+    display2.drawStr(44,42, tempBuf);
+    display2.drawStr(86,42, depthBuf);
+
     display2.sendBuffer();
 
+    // reading ESP32 CPU temp
     int temp_celsius = round(temperatureRead());
     sprintf(satsBuf, "S%d 192.168.4.1 %d/%d %dC", satellites, dispSettings.fullRefreshTime/1000, dispSettings.speedRefreshTime/1000, temp_celsius);
 
-    // display.setRotation(1);
-    // display.setTextColor(GxEPD_BLACK);
-    // display.setFullWindow();
-    // display.firstPage();
-    // StringTranslations texts = getLangTranslations();
-    // do
-    // {
-    //     dtostrf(stats.maxSpeedKmph, 3, 1, maxBuf);
-
-    //     dtostrf(stats.avgSpeedKmph, 3, 1, avgBuf);
-
-    //     dtostrf(stats.distance, 3, 1, distBuf);
-
-    //     dtostrf(0, 3, 1, tempBuf);
-    //     dtostrf(0, 3, 1, depthBuf);
-
-    //     // itoa(stats.lastCourse, courseBuf, 10);
-    //     snprintf(courseBuf, sizeof(courseBuf), "%03d", stats.lastCourse);
-
-    //     display.fillScreen(GxEPD_WHITE);
-    //     DrawUIBox();
-    //     DrawSmallText(texts.AvgSpeed, 0, 0, false);
-    //     DrawSmallText(texts.Course, 155, 0, false);
-    //     DrawSmallText(texts.MaxSpeed, 0, 67, false);
-    //     DrawSmallText(texts.Distance, 155, 67, false);
-
-    //     DrawSmallText(texts.WaterTemp, 0, 134, false);
-    //     DrawSmallText(texts.Depth, 155, 134, false);
-
-    //     if (displaySettings.useKnots)
-    //     {
-    //         DrawMediumText(texts.Knots, 0, 195, true);
-    //     }
-    //     else
-    //     {
-    //         DrawMediumText(texts.Kmph, 0, 195, true);
-    //     }
-
-    //     DrawLargeText(avgBuf, 30, 20, false); // Drawing avg speed
-    //     DrawLargeText(maxBuf, 30, 82, false); // drawing max speed
-
-    //     DrawLargeText(courseBuf, 182, 20, false);
-    //     DrawLargeText(distBuf, 182, 82, false); // Drawing distance
-
-    //     DrawLargeText(tempBuf, 30, 149, false); // drawing water temp
-    //     DrawLargeText(depthBuf, 182, 149, false); // Drawing depth
-
-    //     char satsBuf[40];
-    //     int temp_celsius = round(temperatureRead());
-    //     sprintf(satsBuf, "S%d 192.168.4.1 %d/%d %dC", satellites, dispSettings.fullRefreshTime/1000, dispSettings.speedRefreshTime/1000, temp_celsius);
-    //     DrawSmallText(satsBuf, 0, 382, false);
-    // } while (display.nextPage());
 }
 
 void DisplayHandler::DrawUIBox()
@@ -152,7 +122,7 @@ void DisplayHandler::DrawLargeText(char text[], int16_t x, int16_t y, bool cente
 {
 }
 
-void DisplayHandler::DrawSpeed(double speed, u_int32_t satellites)
+void DisplayHandler::DrawSpeed(double speed)
 {
     char buffer[10];
     // itoa(speed, buffer, 10); // 10 = base (decimal)
