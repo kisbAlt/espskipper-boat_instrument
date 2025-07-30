@@ -1,8 +1,8 @@
  <div align="center">
-<picture>
-        <source media="(prefers-color-scheme: dark)" srcset="./documentation/logo_dark.svg">
-        <source media="(prefers-color-scheme: light)" srcset="./documentation/logo_dark.svg">
-</picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./documentation/logo_dark.svg">
+    <img alt="ESP Skipper logo" src="./documentation/logo_bright.svg">
+  </picture>
   <h2 align="center">ESP32 Boat Instrument</h2>
 </div>
 
