@@ -12,6 +12,9 @@ struct BoatStats
   double maxSpeedKt = 0;
   double lastLat = 0;
   double lastLng = 0;
+  uint8_t lastHour = 0;
+  uint8_t lastMinute = 0;
+
   u_int16_t lastCourse = 0;
   u_int32_t numberOfSamples = 1;
 

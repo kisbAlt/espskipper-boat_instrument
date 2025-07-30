@@ -14,12 +14,12 @@
 #endif
 
 Preferences preferences;
-const StringTranslations eng_strings = {"AVG", "COURSE", "MAX", "DISTANCE", "KM/H", "KNOTS", "Satellites", "TEMP", "DEPTH"};
-const StringTranslations hu_strings = {"ATLAG", "IRANY", "MAXIMUM", "TAV", "KM/H", "CSOMO", "muhold", "HOFOK", "MELYSEG"};
+const StringTranslations eng_strings = {"AVG", "COURSE", "MAX", "DISTANCE", "KM/H", "KNOTS", "Satellites", "TEMP", "DEPTH", "Kilometers", "Celsius", "Meters", "Degrees"};
+const StringTranslations hu_strings = {"ÁTLAG", "IRÁNY", "MAXIMUM", "TÁVOLSÁG", "KM/H", "CSOMÓ", "muhold", "HÕFOK", "MÉLYSÉG", "Kilóméter", "Celsius", "Méter", "Fok"};
+const uint8_t TIMEZONE_SHIFT = 2;
 
 
-
-DisplayHandler::DisplayHandler() : display1(U8G2_R0, /* clk=*/ 18, /* data=*/ 23, /* cs=*/ 5, /* reset=*/ 22), display2(U8G2_R0, /* clk=*/ 19, /* data=*/ 21, /* cs=*/ 22, /* reset=*/ 22)
+DisplayHandler::DisplayHandler() : display1(U8G2_R0, /* clk=*/18, /* data=*/23, /* cs=*/5, /* reset=*/22), display2(U8G2_R0, /* clk=*/19, /* data=*/21, /* cs=*/22, /* reset=*/22)
 {
     Serial.println("Constructor");
 }
@@ -28,11 +28,15 @@ void DisplayHandler::Init()
 {
     dispSettings.LoadData();
     display1.begin();
+    display1.enableUTF8Print();
 
     display2.begin();
+    display2.enableUTF8Print();
+    PrepareDraw();
 }
 
-void DisplayHandler::PrepareDraw() {
+void DisplayHandler::PrepareDraw()
+{
     display1.clearBuffer();
     display1.setFont(u8g2_font_6x10_tf);
     display1.setFontRefHeightExtendedText();
@@ -54,52 +58,110 @@ char distBuf[10];
 char courseBuf[4];
 char depthBuf[4];
 char tempBuf[4];
-void DisplayHandler::DrawUI(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings)
+void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings)
 {
     StringTranslations texts = getLangTranslations();
-    if (!prepared) {
-        PrepareDraw(); 
-        prepared = true;
+
+    char *speedUnitText;
+    if (dispSettings.useKnots)
+    {
+        dtostrf(stats.maxSpeedKt, 3, 1, maxBuf);
+        dtostrf(stats.avgSpeedKt, 3, 1, avgBuf);
+        speedUnitText = texts.Knots;
     }
-
-    display2.clearBuffer();
-    display2.setFont(u8g2_font_5x7_tf);
-    DrawUIBox();
-    display2.drawStr(0,0, texts.AvgSpeed);
-    display2.drawStr(44,0, texts.Course);
-    display2.drawStr(86,0, texts.MaxSpeed);
-
-    display2.drawStr(0,32, texts.Distance);
-    display2.drawStr(44,32, texts.WaterTemp);
-    display2.drawStr(86,32, texts.Depth);
-
-    display2.setFont(u8g2_font_logisoso16_tn);
-
-    // Writing stat datas to buffers
-    dtostrf(stats.maxSpeedKmph, 3, 1, maxBuf);
-    dtostrf(stats.avgSpeedKmph, 3, 1, avgBuf);
+    else
+    {
+        dtostrf(stats.maxSpeedKmph, 3, 1, maxBuf);
+        dtostrf(stats.avgSpeedKmph, 3, 1, avgBuf);
+        speedUnitText = texts.Kmph;
+    }
     dtostrf(stats.distance, 3, 1, distBuf);
     dtostrf(0, 3, 1, tempBuf);
     dtostrf(0, 3, 1, depthBuf);
-    
+
     snprintf(courseBuf, sizeof(courseBuf), "%03d", stats.lastCourse);
 
+    display2.clearBuffer();
 
-    // drawing buffers to screen
-    display2.drawStr(0,10, avgBuf);
-    display2.drawStr(44,10, courseBuf);
-    display2.drawStr(86,10, maxBuf);
+    if (display2State == SUMMARY)
+    {
+        DrawSummary();
+    }
+    else
+    {
+        char *titleText;
+        char *unitText;
+        char *drawBuf;
+        if (display2State == COURSE)
+        {
+            titleText = texts.Course;
+            drawBuf = courseBuf;
+            unitText = texts.Degrees;
+        }else if(display2State == DEPTH) {
+            titleText = texts.Depth;
+            drawBuf = depthBuf;
+            unitText = texts.Meters;
+        }else if(display2State == TEMP) {
+            titleText = texts.WaterTemp;
+            drawBuf = tempBuf;
+            unitText = texts.Celsius;
+        }else if(display2State == SPEED_AVG) {
+            titleText = texts.AvgSpeed;
+            drawBuf = avgBuf;
+            unitText = speedUnitText;
+        }else if(display2State == SPEED_MAX) {
+            titleText = texts.MaxSpeed;
+            drawBuf = maxBuf;
+            unitText = speedUnitText;
+        }else if(display2State == DISTANCE) {
+            titleText = texts.Distance;
+            drawBuf = distBuf;
+            unitText = texts.Kilometers;
+        }
+        display1.setFont(u8g2_font_spleen32x64_mn);
+        int textWidth = display1.getStrWidth(drawBuf);
+        int x = (128 - textWidth) / 2;
+        display1.drawStr(x, -1, drawBuf);
 
-    display2.drawStr(0,42, distBuf);
-    display2.drawStr(44,42, tempBuf);
-    display2.drawStr(86,42, depthBuf);
+        display1.setFont(u8g2_font_6x12_t_symbols);
+
+        textWidth = display1.getStrWidth(titleText);
+        x = (128 - textWidth) / 2;
+        display1.drawUTF8(x, 54, titleText);
+
+        textWidth = display1.getStrWidth(unitText);
+        x = (128 - textWidth) / 2;
+    
+        display1.drawUTF8(x, 0, unitText);
+        
+    }
 
     display2.sendBuffer();
+}
 
-    // reading ESP32 CPU temp
-    int temp_celsius = round(temperatureRead());
-    sprintf(satsBuf, "S%d 192.168.4.1 %d/%d %dC", satellites, dispSettings.fullRefreshTime/1000, dispSettings.speedRefreshTime/1000, temp_celsius);
+void DisplayHandler::DrawSummary()
+{
+    StringTranslations texts = getLangTranslations();
+    display2.setFont(u8g2_font_5x7_tf);
+    DrawUIBox();
+    display2.drawUTF8(0, 0, texts.AvgSpeed);
+    display2.drawUTF8(44, 0, texts.Course);
+    display2.drawUTF8(86, 0, texts.MaxSpeed);
 
+    display2.drawUTF8(0, 32, texts.Distance);
+    display2.drawUTF8(44, 32, texts.WaterTemp);
+    display2.drawUTF8(86, 32, texts.Depth);
+
+    display2.setFont(u8g2_font_logisoso16_tn);
+
+    // drawing buffers to screen
+    display2.drawStr(0, 10, avgBuf);
+    display2.drawStr(44, 10, courseBuf);
+    display2.drawStr(86, 10, maxBuf);
+
+    display2.drawStr(0, 42, distBuf);
+    display2.drawStr(44, 42, tempBuf);
+    display2.drawStr(86, 42, depthBuf);
 }
 
 void DisplayHandler::DrawUIBox()
@@ -110,60 +172,51 @@ void DisplayHandler::DrawUIBox()
     display2.drawLine(0, 31, 128, 31);
 }
 
-void DisplayHandler::DrawSmallText(char text[], int16_t x, int16_t y, bool centerX)
+
+void DisplayHandler::DrawDisplay1(BoatStats stats, u_int32_t satellites)
 {
-}
+    double speed;
 
-void DisplayHandler::DrawMediumText(char text[], int16_t x, int16_t y, bool centerX)
-{
-}
-
-void DisplayHandler::DrawLargeText(char text[], int16_t x, int16_t y, bool centerX)
-{
-}
-
-void DisplayHandler::DrawSpeed(double speed)
-{
-    char buffer[10];
-    // itoa(speed, buffer, 10); // 10 = base (decimal)
-    if (speed >= 10) {
-        dtostrf(speed, 3, 1, buffer);
-    }else {
-        dtostrf(speed, 3, 2, buffer);
-    }
-
-    if (buffer == lastBuffer) {
-        return;
-    }
-    //lastBuffer = buffer;
-
-    const char* speedFormat;
-    if (dispSettings.useKnots) {
+    const char *speedFormat;
+    if (dispSettings.useKnots)
+    {
+        speed = stats.lastSpeedKt;
         speedFormat = getLangTranslations().Knots;
-
-    }else {
+    }
+    else
+    {
+        speed = stats.lastSpeedKmph;
         speedFormat = getLangTranslations().Kmph;
     }
 
-    int textWidth = display1.getStrWidth(speedFormat);
-    int x = (128 - textWidth) / 2;
+    if (speed >= 10)
+    {
+        dtostrf(speed, 3, 1, speedBuffer);
+    }
+    else
+    {
+        dtostrf(speed, 3, 2, speedBuffer);
+    }
+
+    // reading ESP32 CPU temp
+    cpu_temp_celsius = round(temperatureRead());
+    sprintf(satsBuf, "S%d 192.168.4.1 %d/%d %dC", satellites, dispSettings.fullRefreshTime / 1000, dispSettings.speedRefreshTime / 1000, cpu_temp_celsius);
+
+    sprintf(timeBuf, "%02d:%02d", (stats.lastHour+TIMEZONE_SHIFT)%24, stats.lastMinute);
 
     display1.clearBuffer();
     display1.setFont(u8g2_font_spleen32x64_mn);
-    display1.drawStr(0, 0,buffer);
+    display1.drawStr(0, 0, speedBuffer);
     display1.setFont(u8g2_font_5x7_tf);
-    display1.drawStr(0,56, satsBuf);
+    display1.drawStr(0, 56, satsBuf);
+    display1.drawStr(0, 0, timeBuf);
+
+    display1.setFont(u8g2_font_6x12_t_symbols);
+    int textWidth = display1.getStrWidth(speedFormat);
+    int x = (128 - textWidth) / 2;
     display1.drawStr(x, 0, speedFormat);
+    
     display1.sendBuffer();
-}
-
-void DisplayHandler::PartialCourse(u_int16_t course)
-{
-}
-
-
-void DisplayHandler::DrawDisplay1() {
-
 }
 
 StringTranslations DisplayHandler::getLangTranslations()
@@ -179,6 +232,15 @@ StringTranslations DisplayHandler::getLangTranslations()
     else
     {
         return eng_strings;
+    }
+}
+
+// Click counts, -1 value is long press
+void DisplayHandler::HandleButtonInput(int clickCount)
+{
+    if (clickCount == 1)
+    {
+        display2State = static_cast<DisplayState>((static_cast<int>(display2State) + 1) % (maxDisplayState + 1));
     }
 }
 

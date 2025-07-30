@@ -75,7 +75,7 @@ bool GpsHandler::GetGps()
         if (stats.lastLat != 0)
         {
             float d = haversine(stats.lastLat, stats.lastLng, gps.location.lat(), gps.location.lng());
-            if (d > DISTANCE_THRESHOLD && d/1000 < 0.5)
+            if (d > DISTANCE_THRESHOLD && d / 1000 < 0.5)
             {
                 stats.distance += d / 1000;
             }
@@ -99,22 +99,25 @@ bool GpsHandler::GetGps()
         stats.lastLat = gps.location.lat();
         stats.lastLng = gps.location.lng();
         stats.lastCourse = gps.course.deg();
+        stats.lastHour = gps.time.hour();
+        stats.lastMinute = gps.time.minute();
+        
 
-        Serial.print("Lat: ");
-        Serial.println(stats.lastLat);
-        Serial.println();
-        Serial.print("Lon: ");
-        Serial.println(stats.lastLng);
-        Serial.println();
-        Serial.print("couse inner: ");
-        Serial.println(gps.course.deg());
-        Serial.println();
+        // Serial.print("Lat: ");
+        // Serial.println(stats.lastLat);
+        // Serial.println();
+        // Serial.print("Lon: ");
+        // Serial.println(stats.lastLng);
+        // Serial.println();
+        // Serial.print("couse inner: ");
+        // Serial.println(gps.course.deg());
+        // Serial.println();
         RefreshStats();
         return true;
     }
     else
     {
-        //Serial.println("GPS was not updated");
+        // Serial.println("GPS was not updated");
         return false;
     }
 }
