@@ -15,18 +15,13 @@ ESP32 based, open source, low cost boat instrumentation to replace proprietary m
 
 - GPS based speed display
 - Dynamic multi-function display showing real-time metrics
-- Dual display system displaying data independently
-- Using ST7920 128x64 transflective displays for good visibility outdoors
+- Dual display system showing data independently
+- Using ST7920 128x64 transflective displays for good outdoors visibility 
 - Multi language support
 - Configuration through WIFI
 - Open Echo integration, supports depth readings from the TUSS4470 shield through serial connection
 - Rugged weather-resistant housing
 - Reading water temp thermistors from analog transducers
-
-
-## Acknowledgements
-
- - [Open Echo](https://github.com/Neumi/open_echo)
 
 
 ## Tech Stack
@@ -54,6 +49,19 @@ The bold text items are required for the project, non bold components are option
 | TUSS4470 Shield    | Needed for the open_echo project. Order it through **JLCPCB**         | [TUSS4470 shield](https://github.com/Neumi/open_echo/tree/main/TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) |
 | MT3608 step-up converter  | Suggested for the open_echo project to get 24V           | [MT3608](https://www.aliexpress.com/item/1005007508800676.html) |
 | LM2596s step-down converter    | Needed if you are powering the ESP32 from a battery | [LM2596s](https://www.aliexpress.com/item/33004374185.html) |
+| 470uF< capacitor (35V) | Needed for voltage stability before TUSS4470 | - |
+| 1x 10k Ohm resistor    | Needed for the UNO-ESP serial | - |
+| 1x 20k Ohm resistor    | Needed for the UNO-ESP serial | - |
+| IRL540N N-MOSFET Transistor | Needed for toggling the display backlight | - |
 | **Cables & Connectors**     | Some cables, and jumper wires for connections                  | - |
 
 *Most components are inexpensive and widely available.*
+
+<p align="center">
+  <img width="100%" src="./documentation/hardware.png">
+</p>
+
+## Acknowledgements
+
+ - [Open Echo](https://github.com/Neumi/open_echo)
+
