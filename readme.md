@@ -7,7 +7,7 @@
     />
     <img
     src="./documentation/logo_dark.svg"
-    alt="Web Dev Resources Logo"
+    alt="ESP Skipper logo"
     width="50%" height="auto"
     />
   </picture>
