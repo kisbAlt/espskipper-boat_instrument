@@ -66,6 +66,8 @@ private:
   char speedBuffer[10];
   int cpu_temp_celsius = 0;
   DisplayState display2State = SUMMARY;
+  char* GetSpeedUnitText();
+
 
 public:
   DisplayHandler();

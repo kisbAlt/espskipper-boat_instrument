@@ -11,7 +11,9 @@ const float alpha = 0.1;
 #define TXD2 17
 #define GPS_BAUD 9600
 
+// If the dist between two GPS points is less than this value it wont be added to the distance travelled
 const float DISTANCE_THRESHOLD = 1.0; // meters
+
 
 float haversine(float lat1, float lon1, float lat2, float lon2)
 {
@@ -44,16 +46,15 @@ void GpsHandler::RefreshStats()
     if (stats.lastSpeedKmph > stats.maxSpeedKmph)
     {
         stats.maxSpeedKmph = stats.lastSpeedKmph;
-        stats.maxSpeedKt = stats.lastSpeedKt;
     }
 
-    stats.avgSpeedKt = stats.avgSpeedKt + (stats.lastSpeedKt - stats.avgSpeedKt) / stats.numberOfSamples;
+    // calculating the avg speed iteratively
     stats.avgSpeedKmph = stats.avgSpeedKmph + (stats.lastSpeedKmph - stats.avgSpeedKmph) / stats.numberOfSamples;
     stats.numberOfSamples++;
 
-    Serial.print("MaxKmph: ");
-    Serial.println(stats.maxSpeedKmph);
-    Serial.println();
+    // Serial.print("MaxKmph: ");
+    // Serial.println(stats.maxSpeedKmph);
+    // Serial.println();
 }
 
 bool GpsHandler::GetGps()
@@ -65,13 +66,14 @@ bool GpsHandler::GetGps()
 
     if (gps.location.isUpdated())
     {
-        Serial.print("Satellites: ");
-        Serial.println(gps.satellites.value());
-        Serial.println();
-        Serial.print("Speed km: ");
-        Serial.println(gps.speed.kmph());
-        Serial.println();
+        // Serial.print("Satellites: ");
+        // Serial.println(gps.satellites.value());
+        // Serial.println();
+        // Serial.print("Speed km: ");
+        // Serial.println(gps.speed.kmph());
+        // Serial.println();
 
+        // Ignore the first time it run by checking lastLat value
         if (stats.lastLat != 0)
         {
             float d = haversine(stats.lastLat, stats.lastLng, gps.location.lat(), gps.location.lng());
@@ -84,24 +86,20 @@ bool GpsHandler::GetGps()
         if (firstRun)
         {
             stats.lastSpeedKmph = gps.speed.kmph();
-            stats.lastSpeedKt = gps.speed.knots();
             firstRun = false;
         }
         else
         {
+            // adding filtering for the speed data
             stats.lastSpeedKmph = alpha * gps.speed.kmph() + (1 - alpha) * stats.lastSpeedKmph;
-            stats.lastSpeedKt = alpha * gps.speed.knots() + (1 - alpha) * stats.lastSpeedKt;
         }
 
-        // stats.lastSpeedKmph = gps.speed.kmph();
-        // stats.lastSpeedKt = gps.speed.knots();
         lastNumOfSatellites = gps.satellites.value();
         stats.lastLat = gps.location.lat();
         stats.lastLng = gps.location.lng();
         stats.lastCourse = gps.course.deg();
         stats.lastHour = gps.time.hour();
         stats.lastMinute = gps.time.minute();
-        
 
         // Serial.print("Lat: ");
         // Serial.println(stats.lastLat);
@@ -120,4 +118,34 @@ bool GpsHandler::GetGps()
         // Serial.println("GPS was not updated");
         return false;
     }
+}
+
+double BoatStats::GetLastSpeed(bool useKnots)
+{
+    if (useKnots)
+    {
+        return ConvertToKnots(lastSpeedKmph);
+    }
+    return lastSpeedKmph;
+}
+double BoatStats::GetMaxSpeed(bool useKnots)
+{
+    if (useKnots)
+    {
+        return ConvertToKnots(maxSpeedKmph);
+    }
+    return maxSpeedKmph;
+}
+double BoatStats::GetAvgSpeed(bool useKnots)
+{
+    if (useKnots)
+    {
+        return ConvertToKnots(avgSpeedKmph);
+    }
+    return avgSpeedKmph;
+}
+
+double BoatStats::ConvertToKnots(double kmph)
+{
+    return kmph / 1.852;
 }

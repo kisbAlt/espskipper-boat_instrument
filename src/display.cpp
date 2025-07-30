@@ -62,19 +62,10 @@ void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats, Display
 {
     StringTranslations texts = getLangTranslations();
 
-    char *speedUnitText;
-    if (dispSettings.useKnots)
-    {
-        dtostrf(stats.maxSpeedKt, 3, 1, maxBuf);
-        dtostrf(stats.avgSpeedKt, 3, 1, avgBuf);
-        speedUnitText = texts.Knots;
-    }
-    else
-    {
-        dtostrf(stats.maxSpeedKmph, 3, 1, maxBuf);
-        dtostrf(stats.avgSpeedKmph, 3, 1, avgBuf);
-        speedUnitText = texts.Kmph;
-    }
+    char *speedUnitText = GetSpeedUnitText();
+    dtostrf(stats.GetMaxSpeed(displaySettings.useKnots), 3, 1, maxBuf);
+    dtostrf(stats.GetAvgSpeed(displaySettings.useKnots), 3, 1, avgBuf);
+
     dtostrf(stats.distance, 3, 1, distBuf);
     dtostrf(0, 3, 1, tempBuf);
     dtostrf(0, 3, 1, depthBuf);
@@ -166,29 +157,22 @@ void DisplayHandler::DrawSummary()
 
 void DisplayHandler::DrawUIBox()
 {
+    // Draw horizontal lines
     display2.drawLine(42, 0, 42, 64);
     display2.drawLine(84, 0, 84, 64);
 
+    // Draw vertical line on the middle
     display2.drawLine(0, 31, 128, 31);
 }
 
 
 void DisplayHandler::DrawDisplay1(BoatStats stats, u_int32_t satellites)
 {
-    double speed;
+    double speed = stats.GetLastSpeed(dispSettings.useKnots);
 
-    const char *speedFormat;
-    if (dispSettings.useKnots)
-    {
-        speed = stats.lastSpeedKt;
-        speedFormat = getLangTranslations().Knots;
-    }
-    else
-    {
-        speed = stats.lastSpeedKmph;
-        speedFormat = getLangTranslations().Kmph;
-    }
+    const char *speedFormat = GetSpeedUnitText();
 
+    // If speed is less then two digits draw at 2 decimal
     if (speed >= 10)
     {
         dtostrf(speed, 3, 1, speedBuffer);
@@ -240,12 +224,15 @@ void DisplayHandler::HandleButtonInput(int clickCount)
 {
     if (clickCount == 1)
     {
+        // If single click detected increase the enum value of display2State by one
         display2State = static_cast<DisplayState>((static_cast<int>(display2State) + 1) % (maxDisplayState + 1));
     }
 }
 
 void DisplaySettings::SaveData()
 {
+    // saving settings presistently on the ESP32
+
     Serial.println("saving settings...");
     preferences.begin("disp", false);
 
@@ -282,4 +269,15 @@ void DisplaySettings::LoadData()
     }
 
     preferences.end();
+}
+
+char* DisplayHandler::GetSpeedUnitText(){
+    if (dispSettings.useKnots)
+    {
+        return getLangTranslations().Knots;
+    }
+    else
+    {
+        return getLangTranslations().Kmph;
+    }
 }

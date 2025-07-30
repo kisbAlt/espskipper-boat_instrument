@@ -2,14 +2,12 @@
 
 struct BoatStats
 {
+public:
   double lastSpeedKmph = 0;
-  double lastSpeedKt = 0;
-  double avgSpeedKt = 0;
   double avgSpeedKmph = 0;
-  double distance = 0;
-
   double maxSpeedKmph = 0;
-  double maxSpeedKt = 0;
+
+  double distance = 0;
   double lastLat = 0;
   double lastLng = 0;
   uint8_t lastHour = 0;
@@ -21,12 +19,14 @@ struct BoatStats
   void Reset()
   {
     avgSpeedKmph = 0;
-    avgSpeedKt = 0;
     distance = 0;
     maxSpeedKmph = 0;
-    maxSpeedKt = 0;
     numberOfSamples = 1;
   };
+  double GetLastSpeed(bool useKnots);
+  double GetMaxSpeed(bool useKnots);
+  double GetAvgSpeed(bool useKnots);
+  double ConvertToKnots(double kmph);
 };
 
 class GpsHandler
