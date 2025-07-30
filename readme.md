@@ -1,0 +1,68 @@
+ <div align="center">
+  <picture>
+    <source
+    srcset="./documentation/logo_dark.svg"
+    media="(prefers-color-scheme: dark)"
+    width="125" height="125"
+    />
+    <img
+    src="./documentation/logo_dark.svg"
+    alt="Web Dev Resources Logo"
+    width="50%" height="auto"
+    />
+  </picture>
+    
+  <h3 align="center">ESP32 Boat Instrument</h3>
+</div>
+
+## ESPSkipper
+
+ESP32 based, open source, low cost boat instrumentation to replace proprietary marine systems.
+
+
+## Features
+
+- GPS based speed display
+- Dynamic multi-function display showing real-time metrics
+- Dual display system displaying data independently
+- Using ST7920 128x64 transflective displays for good visibility outdoors
+- Multi language support
+- Configuration through WIFI
+- Open Echo integration, supports depth readings from the TUSS4470 shield through serial connection
+- Rugged weather-resistant housing
+- Reading water temp thermistors from analog transducers
+
+
+## Acknowledgements
+
+ - [Open Echo](https://github.com/Neumi/open_echo)
+
+
+## Tech Stack
+
+**ESP32:** C++, U8g2lib, PlatformIO, Arduino Platform, HTML, 
+
+
+
+## Screenshots
+
+![Housing1](./documentation/housing1.png)
+![Housing2](./documentation/housing2.png)
+
+## Hardware Components
+
+The bold text items are required for the project, non bold components are optional.
+
+| Component                   | Description                                         | Link                           |
+|-----------------------------|-----------------------------------------------------|--------------------------------|
+| **1x ESP32 Devkit V4**         | Main microcontroller handling display, GPS, and Open Echo data | [ESP32 Devkit V4](https://www.aliexpress.com/item/1005006422498371.html) |
+| **1x GPS Module (e.g. NEO‑6M/NEO-8M)**| Location, Speed, Course data via NMEA        | [NEO-6M](https://www.aliexpress.com/item/1005007175919889.html) |
+| **2x ST7920 128x64 Display**  | Good visibility transflective LCD with backlight | [ST7920 12864](https://www.aliexpress.com/item/2043862354.html) |
+| **1x pushbutton** | Can be any pushbutton, but the housing is designed for this type | [10Pcs 7mm Threaded button](https://www.aliexpress.com/item/32804945328.html) |
+| Arduino UNO R3      | Needed for the open_echo project   | [UNO R3](https://www.aliexpress.com/item/1005006141687578.html) |
+| TUSS4470 Shield    | Needed for the open_echo project. Order it through **JLCPCB**         | [TUSS4470 shield](https://github.com/Neumi/open_echo/tree/main/TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) |
+| MT3608 step-up converter  | Suggested for the open_echo project to get 24V           | [MT3608](https://www.aliexpress.com/item/1005007508800676.html) |
+| LM2596s step-down converter    | Needed if you are powering the ESP32 from a battery | [LM2596s](https://www.aliexpress.com/item/33004374185.html) |
+| **Cables & Connectors**     | Some cables, and jumper wires for connections                  | - |
+
+*Most components are inexpensive and widely available.*
