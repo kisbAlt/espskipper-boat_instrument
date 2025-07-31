@@ -2,6 +2,8 @@
 #include <gpshandler.h>
 #include <U8g2lib.h>
 
+#define SPEED_HISTORY_COUNT 128
+#define SPEED_GRAPH_HEIGHT 60
 
 enum Language {
   ENGLISH = 0,
@@ -16,8 +18,9 @@ enum DisplayState {
   SPEED_AVG=4,
   SPEED_MAX=5,
   DISTANCE=6,
+  SPEED_HISTORY=7
 };
-constexpr int maxDisplayState = 6; // or whatever the last value is
+constexpr int maxDisplayState = 7; // or whatever the last value is
 
 struct DisplaySettings
 {
@@ -25,9 +28,12 @@ struct DisplaySettings
   bool coursePartialUpdate = true;
   u_int32_t fullRefreshTime = 2000;
   u_int16_t speedRefreshTime = 1000;
-  Language language = HUNGARIAN;
+  u_int16_t speedGraphUpdate = 5000;
+  Language language = ENGLISH;
+  
   void SaveData();
   void LoadData();
+
 };
 
 struct StringTranslations {
@@ -44,7 +50,7 @@ struct StringTranslations {
   char Celsius[15];
   char Meters[15];
   char Degrees[15];
-
+  char Interval[15];
 };
 
 class DisplayHandler
@@ -58,7 +64,8 @@ private:
   void DrawUIBox();
   void PrepareDraw();
   void DrawSummary();
-  StringTranslations getLangTranslations();
+  void DrawSpeedHistory();
+  const StringTranslations& getLangTranslations();
   char lastBuffer[10];
   u_int16_t lastCourse = 0;
   char satsBuf[40];
@@ -66,14 +73,20 @@ private:
   char speedBuffer[10];
   int cpu_temp_celsius = 0;
   DisplayState display2State = SUMMARY;
-  char* GetSpeedUnitText();
-
+  const char* GetSpeedUnitText();
+  double speedHistory[SPEED_HISTORY_COUNT];
+  uint8_t historyIndex = 0;
+  void SaveSpeedHistory(double speed);
+  bool speedHistoryUpdated = false;
+  unsigned long lastHistoryUpdate = 0;
+  u_int16_t numOfHistoryAvgCount = 0;
+  double currentHistoryAvg = 1;
 
 public:
   DisplayHandler();
   DisplaySettings dispSettings;
   void Init();
   void DrawDisplay2(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings);
-  void DrawDisplay1(BoatStats stats, u_int32_t satellites);
+  void DrawDisplay1(BoatStats stats, u_int32_t satellites, unsigned long now);
   void HandleButtonInput(int clickCount);
 };

@@ -45,6 +45,8 @@ The bold text items are required for the project, non bold components are option
 | **1x GPS Module (e.g. NEO‑6M/NEO-8M)**| Location, Speed, Course data via NMEA        | [NEO-6M](https://www.aliexpress.com/item/1005007175919889.html) |
 | **2x ST7920 128x64 Display**  | Good visibility transflective LCD with backlight | [ST7920 12864](https://www.aliexpress.com/item/2043862354.html) |
 | **1x pushbutton** | Can be any pushbutton, but the housing is designed for this type | [10Pcs 7mm Threaded button](https://www.aliexpress.com/item/32804945328.html) |
+| **15x4mm EPDM sponge crown strip** | Needed for sealing (you can experiment with similar types too) | [15x4 EPDM strip](https://www.sealsdirect.co.uk/shop/srs3293-22832) |
+| **2mm thick plexiglass** | Cut for 160x110mm | - |
 | Arduino UNO R3      | Needed for the open_echo project   | [UNO R3](https://www.aliexpress.com/item/1005006141687578.html) |
 | TUSS4470 Shield    | Needed for the open_echo project. Order it through **JLCPCB**         | [TUSS4470 shield](https://github.com/Neumi/open_echo/tree/main/TUSS4470_shield_002/TUSS4470_shield_hardware/TUSS4470_shield) |
 | MT3608 step-up converter  | Suggested for the open_echo project to get 24V           | [MT3608](https://www.aliexpress.com/item/1005007508800676.html) |
@@ -55,7 +57,7 @@ The bold text items are required for the project, non bold components are option
 | IRL540N N-MOSFET Transistor | Needed for toggling the display backlight | - |
 | **Cables & Connectors**     | Some cables, and jumper wires for connections                  | - |
 
-*Most components are inexpensive and widely available.*
+
 
 <p align="center">
   <img width="100%" src="./documentation/hardware.png">

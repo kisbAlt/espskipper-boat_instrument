@@ -1,5 +1,7 @@
 #include <Arduino.h>
 
+
+
 struct BoatStats
 {
 public:
@@ -26,7 +28,7 @@ public:
   double GetLastSpeed(bool useKnots);
   double GetMaxSpeed(bool useKnots);
   double GetAvgSpeed(bool useKnots);
-  double ConvertToKnots(double kmph);
+  static double ConvertToKnots(double kmph);
 };
 
 class GpsHandler

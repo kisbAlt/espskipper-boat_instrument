@@ -8,7 +8,7 @@ WifiHandler wifiHandler;
 OpenEchoInterface openEchoInterface;
 
 // button PIN: 32
-#define BUTTON_PIN 32       // GPIO connected to button
+#define BUTTON_PIN 32 // GPIO connected to button
 unsigned long lastDebounceTime = 0;
 unsigned long pressStartTime = 0;
 int clickCount = 0;
@@ -21,7 +21,6 @@ const unsigned long longPressDuration = 1000;
 bool btnPressed = false;
 bool btnReleased = false;
 bool lastButtonState = HIGH;
-
 
 void findFirstGps()
 {
@@ -47,34 +46,40 @@ void setup()
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
-  //openEchoInterface.ReadPacket();
+  // openEchoInterface.ReadPacket();
 }
 
 unsigned long lastSpeedUpdate = 0;
 unsigned long lastDisplayUpdate = 0;
-bool forceDisp2Refresh = true;
+bool forceDispRefresh = true;
 bool gpsWasRefreshed = false;
 
-
-int handleClicks(unsigned long now) {
+int handleClicks(unsigned long now)
+{
   bool currentState = digitalRead(BUTTON_PIN);
 
   // Debounce check
-  if (currentState != lastButtonState) {
+  if (currentState != lastButtonState)
+  {
     lastDebounceTime = now;
-    
-    if(currentState == LOW) {
+
+    if (currentState == LOW)
+    {
       btnPressed = true;
       btnReleased = false;
-    }else {
+    }
+    else
+    {
       btnReleased = true;
       btnPressed = false;
     }
     lastButtonState = currentState;
   }
 
-  if ((now - lastDebounceTime) > debounceDelay) {
-    if (btnPressed) {
+  if ((now - lastDebounceTime) > debounceDelay)
+  {
+    if (btnPressed)
+    {
       // Button just pressed
       pressStartTime = now;
       buttonIsPressed = true;
@@ -82,18 +87,21 @@ int handleClicks(unsigned long now) {
       btnPressed = false;
     }
 
-    if (btnReleased && buttonIsPressed) {
+    if (btnReleased && buttonIsPressed)
+    {
       // Button just released
       btnReleased = false;
       buttonIsPressed = false;
-      if (!longPressDetected) {
+      if (!longPressDetected)
+      {
         clickCount++;
-        lastDebounceTime = now;  // restart click timeout
+        lastDebounceTime = now; // restart click timeout
       }
     }
 
     // Long press detection
-    if (buttonIsPressed && !longPressDetected && (now - pressStartTime >= longPressDuration)) {
+    if (buttonIsPressed && !longPressDetected && (now - pressStartTime >= longPressDuration))
+    {
       Serial.println("LONG PRESS");
       longPressDetected = true;
       clickCount = 0;
@@ -101,7 +109,8 @@ int handleClicks(unsigned long now) {
     }
 
     // Handle click count if no more clicks coming
-    if (!buttonIsPressed && clickCount > 0 && (now - lastDebounceTime > clickTimeout)) {
+    if (!buttonIsPressed && clickCount > 0 && (now - lastDebounceTime > clickTimeout))
+    {
       int clicks = clickCount;
       clickCount = 0;
       return clicks;
@@ -113,44 +122,36 @@ int handleClicks(unsigned long now) {
 void loop()
 {
   unsigned long now = millis();
-  
+
   int clicks = handleClicks(now);
-  if (clicks != 0) {
+  if (clicks != 0)
+  {
     dispHandler.HandleButtonInput(clicks);
-    forceDisp2Refresh = true;
+    forceDispRefresh = true;
   }
 
-  if (forceDisp2Refresh || now - lastDisplayUpdate >= dispHandler.dispSettings.fullRefreshTime)
+  if (gpsHandler.GetGps())
+  {
+    gpsWasRefreshed = true;
+  }
+
+  if (forceDispRefresh || now - lastSpeedUpdate >= dispHandler.dispSettings.speedRefreshTime)
+  {
+    dispHandler.DrawDisplay1(gpsHandler.stats, gpsHandler.lastNumOfSatellites, now);
+    lastSpeedUpdate = now;
+    gpsWasRefreshed = false;
+  }
+
+  if (forceDispRefresh || now - lastDisplayUpdate >= dispHandler.dispSettings.fullRefreshTime)
   {
     dispHandler.DrawDisplay2(gpsHandler.lastNumOfSatellites, gpsHandler.stats, dispHandler.dispSettings);
     lastDisplayUpdate = now;
   }
 
-  if (gpsHandler.GetGps()) {
-    gpsWasRefreshed = true;
-  }
-
-  if (forceDisp2Refresh || now - lastSpeedUpdate >= dispHandler.dispSettings.speedRefreshTime)
+  if (forceDispRefresh)
   {
-    if (dispHandler.dispSettings.useKnots)
-    {
-      dispHandler.DrawDisplay1(gpsHandler.stats, gpsHandler.lastNumOfSatellites);
-    }
-    else
-    {
-      dispHandler.DrawDisplay1(gpsHandler.stats, gpsHandler.lastNumOfSatellites);
-    }
-
-    lastSpeedUpdate = now;
-    gpsWasRefreshed = false;
+    forceDispRefresh = false;
   }
 
-  if (forceDisp2Refresh)
-  {
-    forceDisp2Refresh = false;
-  }
-  
-  wifiHandler.HandleRequests(dispHandler.dispSettings, gpsHandler.stats, &forceDisp2Refresh);
-
+  wifiHandler.HandleRequests(dispHandler.dispSettings, gpsHandler.stats, &forceDispRefresh);
 }
-
