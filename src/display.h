@@ -30,6 +30,7 @@ struct DisplaySettings
   u_int16_t speedRefreshTime = 1000;
   u_int16_t speedGraphUpdate = 5000;
   Language language = ENGLISH;
+  bool backlight_on = false;
   
   void SaveData();
   void LoadData();
@@ -81,6 +82,7 @@ private:
   unsigned long lastHistoryUpdate = 0;
   u_int16_t numOfHistoryAvgCount = 0;
   double currentHistoryAvg = 1;
+  
 
 public:
   DisplayHandler();

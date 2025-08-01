@@ -13,6 +13,8 @@
 #include <Wire.h>
 #endif
 
+#define MOSFET_PIN 4
+
 Preferences preferences;
 const static StringTranslations eng_strings = {"AVG", "COURSE", "MAX", "DISTANCE", "KM/H", "KNOTS", "Satellites", "TEMP", "DEPTH", "Kilometers", "Celsius", "Meters", "Degrees", "Interval"};
 const static StringTranslations hu_strings = {"ÁTLAG", "IRÁNY", "MAXIMUM", "TÁVOLSÁG", "KM/H", "CSOMÓ", "muhold", "HÕFOK", "MÉLYSÉG", "Kilóméter", "Celsius", "Méter", "Fok", "Idokoz"};
@@ -31,6 +33,7 @@ void DisplayHandler::Init()
     display2.begin();
     display2.enableUTF8Print();
     PrepareDraw();
+    pinMode(MOSFET_PIN, OUTPUT);
 }
 
 void DisplayHandler::PrepareDraw()
@@ -272,6 +275,23 @@ void DisplayHandler::HandleButtonInput(int clickCount)
         else
         {
             dispSettings.useKnots = true;
+        }
+        dispSettings.SaveData();
+    }
+    else if (clickCount == -1)
+    {
+        if (dispSettings.backlight_on)
+        {
+            Serial.println("turning off backlight");
+            digitalWrite(MOSFET_PIN, LOW);
+            dispSettings.backlight_on = false;
+            
+        }
+        else
+        {
+            Serial.println("turning on backlight");
+            digitalWrite(MOSFET_PIN, HIGH);
+            dispSettings.backlight_on = true;
         }
         dispSettings.SaveData();
     }

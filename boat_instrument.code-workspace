@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"name": "boat_instrument",
+			"path": "."
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "boat_instrument",
+		"files.associations": {
+			"cmath": "cpp",
+			"random": "cpp"
+		}
+	}
+}

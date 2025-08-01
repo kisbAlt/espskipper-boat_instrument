@@ -1,11 +1,13 @@
 #include <Arduino.h>
 #include <wifihandler.h>
 #include <openEchoInterface.h>
+//#include <accelerometerhandler.h>
 
 DisplayHandler dispHandler;
 GpsHandler gpsHandler;
 WifiHandler wifiHandler;
 OpenEchoInterface openEchoInterface;
+//AccelerometerHandler accelerometer;
 
 // button PIN: 32
 #define BUTTON_PIN 32 // GPIO connected to button
@@ -39,6 +41,7 @@ void setup()
   delay(1000);
   dispHandler.Init();
   gpsHandler.Init();
+  
   delay(1000);
   // findFirstGps();
 
@@ -46,6 +49,7 @@ void setup()
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
+  //accelerometer.Init();
   // openEchoInterface.ReadPacket();
 }
 
