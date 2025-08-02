@@ -4,9 +4,11 @@
 #include <Adafruit_Sensor.h>
 #include <Wire.h>
 
-#define SDA_PIN 35
-#define SCL_PIN 34
+#define SDA_PIN 25
+#define SCL_PIN 26
 
+
+TwoWire I2C_MPU = TwoWire(1);  // Create a second I²C bus
 Adafruit_MPU6050 mpu;
 
 AccelerometerHandler::AccelerometerHandler()
@@ -15,9 +17,8 @@ AccelerometerHandler::AccelerometerHandler()
 
 void AccelerometerHandler::Init()
 {
-    Wire.begin(SDA_PIN, SCL_PIN); // SDA, SCL
-    // Try to initialize!
-    if (!mpu.begin())
+    I2C_MPU.begin(SDA_PIN, SCL_PIN);
+    if (!mpu.begin(0x68, &I2C_MPU))
     {
         Serial.println("Failed to find MPU6050 chip");
         while (1)
@@ -61,4 +62,26 @@ void AccelerometerHandler::Init()
         Serial.println("+- 2000 deg/s");
         break;
     }
+
+    mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
+
+}
+
+void AccelerometerHandler::UpdateGyro() {
+    sensors_event_t a, g, temp;
+    mpu.getEvent(&a, &g, &temp);
+
+    Serial.print("Temperature: ");
+    Serial.print(temp.temperature);
+    Serial.println(" degC");
+    lastTemp = temp.temperature;
+
+    int16_t ax, ay, az;
+    int16_t gx, gy, gz;
+
+    lastRoll = atan2(a.acceleration.y, a.acceleration.z) * 180 / PI;
+    lastPitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180 / PI;
+
+    Serial.print("Pitch: "); Serial.print(lastPitch);
+    Serial.print(" Roll: "); Serial.println(lastRoll);
 }

@@ -6,6 +6,8 @@
 #define ANALOG_READ_REFERENCE_VOLTAGE 3.3 // esp32 uses 3.3v instead of 5
 #define ANALOG_READ_RANGE 4095.0 //ESP32 uses 12 bit so no 1023
 
+// SERIAL PIN: 32
+
 class TransducerHandler {
     int ReadTemp();
 };

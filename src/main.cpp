@@ -1,13 +1,11 @@
 #include <Arduino.h>
 #include <wifihandler.h>
 #include <openEchoInterface.h>
-//#include <accelerometerhandler.h>
 
 DisplayHandler dispHandler;
 GpsHandler gpsHandler;
 WifiHandler wifiHandler;
 OpenEchoInterface openEchoInterface;
-//AccelerometerHandler accelerometer;
 
 // button PIN: 32
 #define BUTTON_PIN 32 // GPIO connected to button
@@ -41,7 +39,7 @@ void setup()
   delay(1000);
   dispHandler.Init();
   gpsHandler.Init();
-  
+
   delay(1000);
   // findFirstGps();
 
@@ -49,14 +47,14 @@ void setup()
 
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
-  //accelerometer.Init();
-  // openEchoInterface.ReadPacket();
+  openEchoInterface.Init();
 }
 
 unsigned long lastSpeedUpdate = 0;
 unsigned long lastDisplayUpdate = 0;
 bool forceDispRefresh = true;
 bool gpsWasRefreshed = false;
+u_int8_t depthIndex = 0;
 
 int handleClicks(unsigned long now)
 {
@@ -141,14 +139,28 @@ void loop()
 
   if (forceDispRefresh || now - lastSpeedUpdate >= dispHandler.dispSettings.speedRefreshTime)
   {
+    unsigned long start = millis();
     dispHandler.DrawDisplay1(gpsHandler.stats, gpsHandler.lastNumOfSatellites, now);
-    lastSpeedUpdate = now;
+    unsigned long end = millis();
+    unsigned long duration = end - start;
+    Serial.printf("Function took %lu milliseconds\n", duration);
     gpsWasRefreshed = false;
+
+    lastSpeedUpdate = now;
   }
 
   if (forceDispRefresh || now - lastDisplayUpdate >= dispHandler.dispSettings.fullRefreshTime)
   {
-    dispHandler.DrawDisplay2(gpsHandler.lastNumOfSatellites, gpsHandler.stats, dispHandler.dispSettings);
+    if (depthIndex > 8)
+    {
+      depthIndex = 0;
+
+      openEchoInterface.ReadPacket();
+    }
+    depthIndex = depthIndex + 1;
+
+    dispHandler.DrawDisplay2(gpsHandler.lastNumOfSatellites, gpsHandler.stats, dispHandler.dispSettings, openEchoInterface.lastDepth);
+
     lastDisplayUpdate = now;
   }
 

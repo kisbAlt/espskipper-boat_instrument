@@ -15,12 +15,13 @@ enum DisplayState {
   DEPTH = 1,
   COURSE = 2,
   TEMP = 3,
-  SPEED_AVG=4,
-  SPEED_MAX=5,
-  DISTANCE=6,
-  SPEED_HISTORY=7
+  GYRO = 4,
+  SPEED_AVG=5,
+  SPEED_MAX=6,
+  DISTANCE=7,
+  SPEED_HISTORY=8
 };
-constexpr int maxDisplayState = 7; // or whatever the last value is
+constexpr int maxDisplayState = 8; // or whatever the last value is
 
 struct DisplaySettings
 {
@@ -29,6 +30,7 @@ struct DisplaySettings
   u_int32_t fullRefreshTime = 2000;
   u_int16_t speedRefreshTime = 1000;
   u_int16_t speedGraphUpdate = 5000;
+  int16_t depthOffset = 40; 
   Language language = ENGLISH;
   bool backlight_on = false;
   
@@ -52,6 +54,7 @@ struct StringTranslations {
   char Meters[15];
   char Degrees[15];
   char Interval[15];
+  char Roll[15];
 };
 
 class DisplayHandler
@@ -65,6 +68,7 @@ private:
   void DrawUIBox();
   void PrepareDraw();
   void DrawSummary();
+  void DrawGyro();
   void DrawSpeedHistory();
   const StringTranslations& getLangTranslations();
   char lastBuffer[10];
@@ -72,6 +76,7 @@ private:
   char satsBuf[40];
   char timeBuf[8];
   char speedBuffer[10];
+  char rollBuf[10];
   int cpu_temp_celsius = 0;
   DisplayState display2State = SUMMARY;
   const char* GetSpeedUnitText();
@@ -88,7 +93,7 @@ public:
   DisplayHandler();
   DisplaySettings dispSettings;
   void Init();
-  void DrawDisplay2(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings);
+  void DrawDisplay2(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings, u_int16_t depth);
   void DrawDisplay1(BoatStats stats, u_int32_t satellites, unsigned long now);
   void HandleButtonInput(int clickCount);
 };

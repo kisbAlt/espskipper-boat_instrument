@@ -6,6 +6,8 @@
 
 #include <U8g2lib.h>
 
+#include <accelerometerhandler.h>
+
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
 #endif
@@ -16,9 +18,11 @@
 #define MOSFET_PIN 4
 
 Preferences preferences;
-const static StringTranslations eng_strings = {"AVG", "COURSE", "MAX", "DISTANCE", "KM/H", "KNOTS", "Satellites", "TEMP", "DEPTH", "Kilometers", "Celsius", "Meters", "Degrees", "Interval"};
-const static StringTranslations hu_strings = {"ÁTLAG", "IRÁNY", "MAXIMUM", "TÁVOLSÁG", "KM/H", "CSOMÓ", "muhold", "HÕFOK", "MÉLYSÉG", "Kilóméter", "Celsius", "Méter", "Fok", "Idokoz"};
+const static StringTranslations eng_strings = {"AVG", "COURSE", "MAX", "DISTANCE", "KM/H", "KNOTS", "Satellites", "TEMP", "DEPTH", "Kilometers", "Celsius", "Meters", "Degrees", "Interval", "ROLL"};
+const static StringTranslations hu_strings = {"ÁTLAG", "IRÁNY", "MAXIMUM", "TÁVOLSÁG", "KM/H", "CSOMÓ", "muhold", "HÕFOK", "MÉLYSÉG", "Kilóméter", "Celsius", "Méter", "Fok", "Idokoz", "DÕLÉS"};
 const uint8_t TIMEZONE_SHIFT = 2;
+AccelerometerHandler accelerometer;
+const int MAX_GYRO_DRAWHEIGHT = 55;
 
 DisplayHandler::DisplayHandler() : display1(U8G2_R0, /* clk=*/18, /* data=*/23, /* cs=*/5, /* reset=*/22), display2(U8G2_R0, /* clk=*/19, /* data=*/21, /* cs=*/22, /* reset=*/22)
 {
@@ -34,6 +38,8 @@ void DisplayHandler::Init()
     display2.enableUTF8Print();
     PrepareDraw();
     pinMode(MOSFET_PIN, OUTPUT);
+
+    accelerometer.Init();
 }
 
 void DisplayHandler::PrepareDraw()
@@ -57,9 +63,9 @@ char maxBuf[10];
 char avgBuf[10];
 char distBuf[10];
 char courseBuf[4];
-char depthBuf[4];
+char depthBuf[6];
 char tempBuf[4];
-void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings)
+void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings, u_int16_t depth)
 {
     StringTranslations texts = getLangTranslations();
 
@@ -69,10 +75,13 @@ void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats, Display
 
     dtostrf(stats.distance, 3, 1, distBuf);
     dtostrf(0, 3, 1, tempBuf);
-    dtostrf(0, 3, 1, depthBuf);
+
+    float depth_offset = (depth+displaySettings.depthOffset)/100;
+    dtostrf(depth_offset, 4, 1, depthBuf);
 
     snprintf(courseBuf, sizeof(courseBuf), "%03d", stats.lastCourse);
 
+    // Needing a seperate if statement, because the display doesen't need to be updated at every execution
     if (display2State == SPEED_HISTORY)
     {
         if (speedHistoryUpdated)
@@ -91,6 +100,10 @@ void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats, Display
         if (display2State == SUMMARY)
         {
             DrawSummary();
+        }
+        else if (display2State == GYRO)
+        {
+            DrawGyro();
         }
         else
         {
@@ -177,6 +190,54 @@ void DisplayHandler::DrawSummary()
     display2.drawStr(0, 42, distBuf);
     display2.drawStr(44, 42, tempBuf);
     display2.drawStr(86, 42, depthBuf);
+}
+
+void DisplayHandler::DrawGyro()
+{
+    accelerometer.UpdateGyro();
+
+    StringTranslations texts = getLangTranslations();
+    display2.setFont(u8g2_font_6x12_t_symbols);
+
+    int textWidth = display2.getStrWidth(texts.Roll);
+    int x = (128 - textWidth) / 2;
+    display2.drawUTF8(x, 0, texts.Roll);
+
+    int rolldisplay = 180 - (int)round(fabs(accelerometer.lastRoll));
+    display2.setFont(u8g2_font_9x15_t_symbols);
+    sprintf(rollBuf, "%d°", rolldisplay);
+    display2.drawUTF8(0, 0, rollBuf);
+
+    float angleRad = rolldisplay * PI / 180.0; // Convert to radians
+    int opposite = (int)(tan(angleRad) * 127);
+    if (opposite <= MAX_GYRO_DRAWHEIGHT)
+    {
+        if (accelerometer.lastRoll > 0)
+        {
+            display2.drawTriangle(0, 63, 127, 63, 127, 63 - opposite);
+        }
+        else
+        {
+            display2.drawTriangle(0, 63, 127, 63, 0, 63 - opposite);
+        }
+    }
+    else
+    {
+        int adjacent = (int)(MAX_GYRO_DRAWHEIGHT / tan(angleRad)); // compute adjacent
+        if (accelerometer.lastRoll > 0)
+        {
+            display2.drawTriangle(0, 63, adjacent, 63, adjacent, 63 - MAX_GYRO_DRAWHEIGHT);
+            display2.drawBox(adjacent,63-MAX_GYRO_DRAWHEIGHT,127-adjacent,63);
+        }
+        else
+        {
+            int x2 =  127-adjacent;
+            display2.drawTriangle(x2, 63, 127, 63, x2, 63 - MAX_GYRO_DRAWHEIGHT);
+            display2.drawBox(0,63-MAX_GYRO_DRAWHEIGHT,127-adjacent,63);
+        }
+    }
+
+    // display2.drawTriangle();
 }
 
 void DisplayHandler::DrawUIBox()
@@ -282,14 +343,11 @@ void DisplayHandler::HandleButtonInput(int clickCount)
     {
         if (dispSettings.backlight_on)
         {
-            Serial.println("turning off backlight");
             digitalWrite(MOSFET_PIN, LOW);
             dispSettings.backlight_on = false;
-            
         }
         else
         {
-            Serial.println("turning on backlight");
             digitalWrite(MOSFET_PIN, HIGH);
             dispSettings.backlight_on = true;
         }
