@@ -37,7 +37,11 @@ void DisplayHandler::Init()
     display2.begin();
     display2.enableUTF8Print();
     PrepareDraw();
+
     pinMode(MOSFET_PIN, OUTPUT);
+    if(dispSettings.backlight_on){
+        digitalWrite(MOSFET_PIN, HIGH);
+    }
 
     accelerometer.Init();
 }
@@ -65,13 +69,13 @@ char distBuf[10];
 char courseBuf[4];
 char depthBuf[6];
 char tempBuf[4];
-void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings, u_int16_t depth)
+void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats,  u_int16_t depth)
 {
     StringTranslations texts = getLangTranslations();
 
     const char *speedUnitText = GetSpeedUnitText();
-    dtostrf(stats.GetMaxSpeed(displaySettings.useKnots), 3, 1, maxBuf);
-    dtostrf(stats.GetAvgSpeed(displaySettings.useKnots), 3, 1, avgBuf);
+    dtostrf(stats.GetMaxSpeed(dispSettings.useKnots), 3, 1, maxBuf);
+    dtostrf(stats.GetAvgSpeed(dispSettings.useKnots), 3, 1, avgBuf);
 
     dtostrf(stats.distance, 3, 1, distBuf);
     dtostrf(0, 3, 1, tempBuf);
@@ -79,7 +83,7 @@ void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats, Display
     if (depth > 0) {
         Serial.println("depthdraw");
         Serial.println(depth);
-        float depth_offset = (roundf((depth+displaySettings.depthOffset)/10.0f))/10.0f;
+        float depth_offset = (roundf((depth+dispSettings.depthOffset)/10.0f))/10.0f;
         Serial.println(depth_offset);
         dtostrf(depth_offset, 4, 1, depthBuf);
     }
@@ -88,7 +92,7 @@ void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats, Display
     snprintf(courseBuf, sizeof(courseBuf), "%03d", stats.lastCourse);
 
     // Needing a seperate if statement, because the display doesen't need to be updated at every execution
-    if (display2State == SPEED_HISTORY)
+    if (dispSettings.display2State == SPEED_HISTORY)
     {
         if (speedHistoryUpdated)
         {
@@ -103,11 +107,11 @@ void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats, Display
 
         display2.clearBuffer();
 
-        if (display2State == SUMMARY)
+        if (dispSettings.display2State == SUMMARY)
         {
             DrawSummary();
         }
-        else if (display2State == GYRO)
+        else if (dispSettings.display2State == GYRO)
         {
             DrawGyro();
         }
@@ -116,37 +120,37 @@ void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats, Display
             char *titleText;
             const char *unitText;
             char *drawBuf;
-            if (display2State == COURSE)
+            if (dispSettings.display2State == COURSE)
             {
                 titleText = texts.Course;
                 drawBuf = courseBuf;
                 unitText = texts.Degrees;
             }
-            else if (display2State == DEPTH)
+            else if (dispSettings.display2State == DEPTH)
             {
                 titleText = texts.Depth;
                 drawBuf = depthBuf;
                 unitText = texts.Meters;
             }
-            else if (display2State == TEMP)
+            else if (dispSettings.display2State == TEMP)
             {
                 titleText = texts.WaterTemp;
                 drawBuf = tempBuf;
                 unitText = texts.Celsius;
             }
-            else if (display2State == SPEED_AVG)
+            else if (dispSettings.display2State == SPEED_AVG)
             {
                 titleText = texts.AvgSpeed;
                 drawBuf = avgBuf;
                 unitText = speedUnitText;
             }
-            else if (display2State == SPEED_MAX)
+            else if (dispSettings.display2State == SPEED_MAX)
             {
                 titleText = texts.MaxSpeed;
                 drawBuf = maxBuf;
                 unitText = speedUnitText;
             }
-            else if (display2State == DISTANCE)
+            else if (dispSettings.display2State == DISTANCE)
             {
                 titleText = texts.Distance;
                 drawBuf = distBuf;
@@ -330,8 +334,8 @@ void DisplayHandler::HandleButtonInput(int clickCount)
 {
     if (clickCount == 1)
     {
-        // If single click detected increase the enum value of display2State by one
-        display2State = static_cast<DisplayState>((static_cast<int>(display2State) + 1) % (maxDisplayState + 1));
+        // If single click detected increase the enum value of dispSettings.display2State by one
+        dispSettings.display2State = static_cast<DisplayState>((static_cast<int>(dispSettings.display2State) + 1) % (maxDisplayState + 1));
     }
     else if (clickCount == 2)
     {
@@ -343,7 +347,6 @@ void DisplayHandler::HandleButtonInput(int clickCount)
         {
             dispSettings.useKnots = true;
         }
-        dispSettings.SaveData();
     }
     else if (clickCount == -1)
     {
@@ -357,8 +360,8 @@ void DisplayHandler::HandleButtonInput(int clickCount)
             digitalWrite(MOSFET_PIN, HIGH);
             dispSettings.backlight_on = true;
         }
-        dispSettings.SaveData();
     }
+    dispSettings.SaveData();
 }
 
 void DisplaySettings::SaveData()
@@ -372,6 +375,10 @@ void DisplaySettings::SaveData()
     preferences.putUInt("refresh1", fullRefreshTime);
     preferences.putUInt("refresh2", speedRefreshTime);
     preferences.putInt("language", static_cast<int>(language));
+    preferences.putInt("lastdisp", static_cast<int>(display2State));
+    preferences.putUInt("graphu", speedGraphUpdate);
+    preferences.putUInt("doffset", depthOffset);
+    preferences.putBool("backlight", backlight_on);
 
     preferences.end();
 }
@@ -398,6 +405,22 @@ void DisplaySettings::LoadData()
     if (preferences.isKey("language"))
     {
         language = static_cast<Language>(preferences.getInt("language", ENGLISH));
+    }
+    if (preferences.isKey("lastdisp"))
+    {
+        display2State = static_cast<DisplayState>(preferences.getInt("lastdisp", SUMMARY));
+    }
+    if (preferences.isKey("graphu"))
+    {
+        speedGraphUpdate = preferences.getUInt("graphu", false);
+    }
+    if (preferences.isKey("doffset"))
+    {
+        depthOffset = preferences.getUInt("doffset", false);
+    }
+    if (preferences.isKey("backlight"))
+    {
+        backlight_on = preferences.getBool("backlight", false);
     }
 
     preferences.end();

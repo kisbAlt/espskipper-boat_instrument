@@ -34,7 +34,7 @@ struct DisplaySettings
   int16_t depthOffset = 40; 
   Language language = ENGLISH;
   bool backlight_on = false;
-  
+  DisplayState display2State = SUMMARY;
   void SaveData();
   void LoadData();
 
@@ -79,7 +79,7 @@ private:
   char speedBuffer[10];
   char rollBuf[10];
   int cpu_temp_celsius = 0;
-  DisplayState display2State = SUMMARY;
+  
   const char* GetSpeedUnitText();
   double speedHistory[SPEED_HISTORY_COUNT];
   uint8_t historyIndex = 0;
@@ -94,7 +94,7 @@ public:
   DisplayHandler();
   DisplaySettings dispSettings;
   void Init();
-  void DrawDisplay2(u_int32_t satellites, BoatStats stats, DisplaySettings displaySettings, u_int16_t depth);
+  void DrawDisplay2(u_int32_t satellites, BoatStats stats, u_int16_t depth);
   void DrawDisplay1(BoatStats stats, u_int32_t satellites, unsigned long now);
   void HandleButtonInput(int clickCount);
 };

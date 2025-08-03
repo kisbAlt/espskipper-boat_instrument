@@ -21,41 +21,40 @@ void OpenEchoInterface::Init()
 
 bool OpenEchoInterface::ReadPacket()
 {
-    if(!ser.available()){
+    if (!ser.available())
+    {
         return false;
     }
-    uint8_t readBuf[PAYLOAD_SIZE];
-    while (true)
+    uint8_t readBuf[SERIAL_BUFFER];
+    size_t byteCount = ser.readBytes(readBuf, ser.available() - 1);
+    int byteIndex = 0;
+    while (byteIndex < byteCount)
     {
-        uint8_t header = ser.read();;
-        
-        if (header == -1) {continue;} // No data
-
-        if (header != START_BYTE) {continue;} // Not start byte
-
-
-        if (header != START_BYTE)
+        if (readBuf[byteIndex] != START_BYTE)
         {
+            byteIndex = byteIndex + 1;
             continue;
+        }
+
+        // skipping the START_BYTE byte
+        byteIndex = byteIndex + 1;
+
+        // If not enough data in buffer, return
+        if (byteIndex > byteCount - 10)
+        {
+            return false;
         }
 
         uint8_t payload[PAYLOAD_SIZE];
         uint8_t checksum;
 
-        if (!READ_SAMPLES)
+        if (READ_SAMPLES)
         {
-            while (ser.available() < 9)
+            // TODO: INCOMPLETE IMPLEMENTATION
+
+            if (byteIndex > byteCount-TOTAL_PACKET_SIZE)
             {
-                delay(1);
-            }
-            size_t readCount = ser.readBytes(payload, 8);
-        }
-        else
-        {
-            // Wait until the rest of the packet is available
-            while (ser.available() < TOTAL_PACKET_SIZE - 1)
-            {
-                delay(1);
+                return false;
             }
             // Read payload with timeout
             size_t readCount = ser.readBytes(payload, PAYLOAD_SIZE);
@@ -89,8 +88,6 @@ bool OpenEchoInterface::ReadPacket()
             }
         }
 
-        
-
         // // Read payload
         // for (size_t i = 0; i < PAYLOAD_SIZE; ++i)
         // {
@@ -117,27 +114,19 @@ bool OpenEchoInterface::ReadPacket()
         // }
 
         // Parse depth, temperature, drive voltage
-        uint16_t depth = (payload[0] << 8) | payload[1];
-        int16_t tempScaled = (payload[2] << 8) | payload[3];
-        uint16_t vDrvScaled = (payload[4] << 8) | payload[5];
+
+        uint16_t depth = (readBuf[byteIndex] << 8) | readBuf[byteIndex + 1];
+        int16_t tempScaled = (readBuf[byteIndex + 2] << 8) | readBuf[byteIndex + 3];
+        uint16_t vDrvScaled = (readBuf[byteIndex + 4] << 8) | readBuf[byteIndex + 5];
 
         lastDepth = min(depth, (uint16_t)NUM_SAMPLES);
         int temperatureOut = tempScaled / 100.0;
         int driveVoltageOut = vDrvScaled / 100.0;
-        // Serial.println("temp");
-        // Serial.println(temperatureOut);
-        // Serial.println("voltage");
-        // Serial.println(driveVoltageOut);
 
-        //Serial.println("depth");
-        //Serial.println(lastDepth);
-
-        // Parse samples
-        // for (size_t i = 0; i < NUM_SAMPLES; ++i) {
-        //     size_t index = 6 + i * 2;
-        //     samplesOut[i] = (payload[index] << 8) | payload[index + 1];
-        // }
+        Serial.println("depth1:");
+        Serial.println(lastDepth);
 
         return true; // Successfully read packet
     }
+    return false;
 }

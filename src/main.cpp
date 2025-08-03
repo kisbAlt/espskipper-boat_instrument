@@ -149,7 +149,7 @@ void loop()
 
   if (forceDispRefresh || now - lastDisplayUpdate >= dispHandler.dispSettings.fullRefreshTime)
   {
-    dispHandler.DrawDisplay2(gpsHandler.lastNumOfSatellites, gpsHandler.stats, dispHandler.dispSettings, openEchoInterface.lastDepth);
+    dispHandler.DrawDisplay2(gpsHandler.lastNumOfSatellites, gpsHandler.stats, openEchoInterface.lastDepth);
 
     lastDisplayUpdate = now;
   }
