@@ -76,8 +76,14 @@ void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats, Display
     dtostrf(stats.distance, 3, 1, distBuf);
     dtostrf(0, 3, 1, tempBuf);
 
-    float depth_offset = (depth+displaySettings.depthOffset)/100;
-    dtostrf(depth_offset, 4, 1, depthBuf);
+    if (depth > 0) {
+        Serial.println("depthdraw");
+        Serial.println(depth);
+        float depth_offset = (roundf((depth+displaySettings.depthOffset)/10.0f))/10.0f;
+        Serial.println(depth_offset);
+        dtostrf(depth_offset, 4, 1, depthBuf);
+    }
+
 
     snprintf(courseBuf, sizeof(courseBuf), "%03d", stats.lastCourse);
 

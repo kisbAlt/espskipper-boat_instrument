@@ -4,6 +4,7 @@
 #include <HardwareSerial.h>
 #define READ_SAMPLES false
 #define NUM_SAMPLES 1500
+#define SERIAL_BUFFER 4096
 const uint8_t START_BYTE = 0xAA;
 const size_t PAYLOAD_SIZE = 6 + 2 * NUM_SAMPLES;
 const size_t TOTAL_PACKET_SIZE = 1 + PAYLOAD_SIZE + 1; // header + payload + checksum
@@ -14,7 +15,7 @@ HardwareSerial ser(1); // Use UART2
 void OpenEchoInterface::Init()
 {
     // needing hight buffer for 1800+ length
-    ser.setRxBufferSize(4096);
+    ser.setRxBufferSize(SERIAL_BUFFER);
     ser.begin(115200, SERIAL_8N1, 33, -1); // RX=GPI32
 }
 
@@ -23,6 +24,7 @@ bool OpenEchoInterface::ReadPacket()
     if(!ser.available()){
         return false;
     }
+    uint8_t readBuf[PAYLOAD_SIZE];
     while (true)
     {
         uint8_t header = ser.read();;

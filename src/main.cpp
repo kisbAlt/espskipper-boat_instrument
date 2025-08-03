@@ -52,9 +52,9 @@ void setup()
 
 unsigned long lastSpeedUpdate = 0;
 unsigned long lastDisplayUpdate = 0;
+unsigned long lastDepthUpdate = 0;
 bool forceDispRefresh = true;
 bool gpsWasRefreshed = false;
-u_int8_t depthIndex = 0;
 
 int handleClicks(unsigned long now)
 {
@@ -139,11 +139,9 @@ void loop()
 
   if (forceDispRefresh || now - lastSpeedUpdate >= dispHandler.dispSettings.speedRefreshTime)
   {
-    unsigned long start = millis();
+
     dispHandler.DrawDisplay1(gpsHandler.stats, gpsHandler.lastNumOfSatellites, now);
-    unsigned long end = millis();
-    unsigned long duration = end - start;
-    Serial.printf("Function took %lu milliseconds\n", duration);
+
     gpsWasRefreshed = false;
 
     lastSpeedUpdate = now;
@@ -151,17 +149,19 @@ void loop()
 
   if (forceDispRefresh || now - lastDisplayUpdate >= dispHandler.dispSettings.fullRefreshTime)
   {
-    if (depthIndex > 8)
-    {
-      depthIndex = 0;
-
-      openEchoInterface.ReadPacket();
-    }
-    depthIndex = depthIndex + 1;
-
     dispHandler.DrawDisplay2(gpsHandler.lastNumOfSatellites, gpsHandler.stats, dispHandler.dispSettings, openEchoInterface.lastDepth);
 
     lastDisplayUpdate = now;
+  }
+
+  if (forceDispRefresh || now - lastDepthUpdate >= dispHandler.dispSettings.depthUpdate)
+  {
+    unsigned long start = millis();
+    openEchoInterface.ReadPacket();
+    unsigned long end = millis();
+    unsigned long duration = end - start;
+    Serial.printf("Function took %lu milliseconds\n", duration);
+    lastDepthUpdate = now;
   }
 
   if (forceDispRefresh)
