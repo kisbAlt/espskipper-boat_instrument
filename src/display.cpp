@@ -16,6 +16,8 @@
 #endif
 
 #define MOSFET_PIN 4
+#define DISP1_RESET 19
+#define DISP2_RESET 22
 
 Preferences preferences;
 const static StringTranslations eng_strings = {"AVG", "COURSE", "MAX", "DISTANCE", "KM/H", "KNOTS", "Satellites", "TEMP", "DEPTH", "Kilometers", "Celsius", "Meters", "Degrees", "Interval", "ROLL"};
@@ -24,17 +26,29 @@ const uint8_t TIMEZONE_SHIFT = 2;
 AccelerometerHandler accelerometer;
 const int MAX_GYRO_DRAWHEIGHT = 55;
 
-DisplayHandler::DisplayHandler() : display1(U8G2_R0, /* clk=*/18, /* data=*/23, /* cs=*/5, /* reset=*/22), display2(U8G2_R0, /* clk=*/19, /* data=*/21, /* cs=*/22, /* reset=*/22)
+DisplayHandler::DisplayHandler() : display1(U8G2_R0, /* cs=*/ 5, /* reset=19*/ U8X8_PIN_NONE), display2(U8G2_R0, /* cs=*/ 21, /* reset=22*/ U8X8_PIN_NONE)
 {
 }
 
 void DisplayHandler::Init()
 {
+    pinMode(DISP1_RESET, OUTPUT);
+    pinMode(DISP2_RESET, OUTPUT);
     dispSettings.LoadData();
     display1.begin();
+    display1.setBusClock(530000);   // 530 kHz
+    digitalWrite(DISP1_RESET, LOW);
+    delay(100);
+    digitalWrite(DISP1_RESET, HIGH);
+
     display1.enableUTF8Print();
 
     display2.begin();
+    display2.setBusClock(530000);   // 530 kHz
+    digitalWrite(DISP2_RESET, LOW);
+    delay(100);
+    digitalWrite(DISP2_RESET, HIGH);
+
     display2.enableUTF8Print();
     PrepareDraw();
 
@@ -43,7 +57,7 @@ void DisplayHandler::Init()
         digitalWrite(MOSFET_PIN, HIGH);
     }
 
-    accelerometer.Init();
+    //accelerometer.Init();
 }
 
 void DisplayHandler::PrepareDraw()
@@ -71,6 +85,7 @@ char depthBuf[6];
 char tempBuf[4];
 void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats,  u_int16_t depth)
 {
+
     StringTranslations texts = getLangTranslations();
 
     const char *speedUnitText = GetSpeedUnitText();
@@ -87,7 +102,6 @@ void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats,  u_int1
         Serial.println(depth_offset);
         dtostrf(depth_offset, 4, 1, depthBuf);
     }
-
 
     snprintf(courseBuf, sizeof(courseBuf), "%03d", stats.lastCourse);
 
@@ -408,7 +422,8 @@ void DisplaySettings::LoadData()
     }
     if (preferences.isKey("lastdisp"))
     {
-        display2State = static_cast<DisplayState>(preferences.getInt("lastdisp", SUMMARY));
+        //display2State = static_cast<DisplayState>(preferences.getInt("lastdisp", SUMMARY));
+        display2State = SUMMARY;
     }
     if (preferences.isKey("graphu"))
     {

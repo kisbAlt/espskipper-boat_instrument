@@ -61,8 +61,8 @@ struct StringTranslations {
 class DisplayHandler
 {
 private:
-  U8G2_ST7920_128X64_F_SW_SPI display1;
-  U8G2_ST7920_128X64_F_SW_SPI display2;
+  U8G2_ST7920_128X64_F_HW_SPI display1;
+  U8G2_ST7920_128X64_F_HW_SPI display2;
   void DrawLargeText(char text[], int16_t x, int16_t y, bool centerX);
   void DrawMediumText(char text[], int16_t x, int16_t y, bool centerX);
   void DrawSmallText(char text[], int16_t x, int16_t y, bool centerX);

@@ -7,8 +7,8 @@ HardwareSerial gpsSerial(2); // UART1
 const float alpha = 0.1;
 
 // Define the RX and TX pins
-#define RXD2 16
-#define TXD2 17
+#define RXD2 17
+#define TXD2 16
 #define GPS_BAUD 9600
 
 // If the dist between two GPS points is less than this value it wont be added to the distance travelled

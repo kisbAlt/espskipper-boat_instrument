@@ -7,6 +7,7 @@ GpsHandler gpsHandler;
 WifiHandler wifiHandler;
 OpenEchoInterface openEchoInterface;
 
+
 // button PIN: 32
 #define BUTTON_PIN 32 // GPIO connected to button
 unsigned long lastDebounceTime = 0;
@@ -48,16 +49,21 @@ void setup()
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
   openEchoInterface.Init();
+  Serial.println("Init done");
 }
 
 unsigned long lastSpeedUpdate = 0;
 unsigned long lastDisplayUpdate = 0;
 unsigned long lastDepthUpdate = 0;
+unsigned long lastTaskEnd = 0;
+unsigned long lastTaskStart = 0;
+unsigned long lastTaskDuration = 0;
 bool forceDispRefresh = true;
 bool gpsWasRefreshed = false;
 
 int handleClicks(unsigned long now)
 {
+  
   bool currentState = digitalRead(BUTTON_PIN);
 
   // Debounce check
@@ -121,30 +127,44 @@ int handleClicks(unsigned long now)
   return 0;
 }
 
+void startMeasure()
+{
+  lastTaskStart = millis();
+}
+void printMeasurement(const char *taskName)
+{
+  lastTaskEnd = millis();
+  lastTaskDuration = lastTaskEnd - lastTaskStart;
+  Serial.printf("%s took %lu milliseconds\n", taskName, lastTaskDuration);
+  lastTaskStart = lastTaskEnd;
+}
+
 void loop()
 {
   unsigned long now = millis();
 
-  int clicks = handleClicks(now);
-  if (clicks != 0)
-  {
-    dispHandler.HandleButtonInput(clicks);
-    forceDispRefresh = true;
-  }
+  // int clicks = handleClicks(now);
+  // if (clicks != 0)
+  // {
+  //   dispHandler.HandleButtonInput(clicks);
+  //   forceDispRefresh = true;
+  // }
 
-  if (gpsHandler.GetGps())
-  {
-    gpsWasRefreshed = true;
-  }
+  // if (gpsHandler.GetGps())
+  // {
+  //   gpsWasRefreshed = true;
+  // }
+
+  startMeasure();
 
   if (forceDispRefresh || now - lastSpeedUpdate >= dispHandler.dispSettings.speedRefreshTime)
   {
-
     dispHandler.DrawDisplay1(gpsHandler.stats, gpsHandler.lastNumOfSatellites, now);
 
     gpsWasRefreshed = false;
 
     lastSpeedUpdate = now;
+    printMeasurement("Display1Update");
   }
 
   if (forceDispRefresh || now - lastDisplayUpdate >= dispHandler.dispSettings.fullRefreshTime)
@@ -152,17 +172,20 @@ void loop()
     dispHandler.DrawDisplay2(gpsHandler.lastNumOfSatellites, gpsHandler.stats, openEchoInterface.lastDepth);
 
     lastDisplayUpdate = now;
+
+    printMeasurement("Display2Update");
   }
 
-  if (forceDispRefresh || now - lastDepthUpdate >= dispHandler.dispSettings.depthUpdate)
-  {
-    unsigned long start = millis();
-    openEchoInterface.ReadPacket();
-    unsigned long end = millis();
-    unsigned long duration = end - start;
-    Serial.printf("Function took %lu milliseconds\n", duration);
-    lastDepthUpdate = now;
-  }
+  // if (forceDispRefresh || now - lastDepthUpdate >= dispHandler.dispSettings.depthUpdate)
+  // {
+  //   Serial.println("ooecho");
+
+  //   openEchoInterface.ReadPacket();
+
+  //   lastDepthUpdate = now;
+
+  //   printMeasurement("depthUpdate");
+  // }
 
   if (forceDispRefresh)
   {
