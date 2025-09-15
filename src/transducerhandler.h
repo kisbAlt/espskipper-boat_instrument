@@ -1,3 +1,5 @@
+#pragma once
+
 // Airmar thermister equation coefficients
 #define A 0.0011321253
 #define B 0.000233722

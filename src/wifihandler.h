@@ -1,3 +1,5 @@
+#pragma once
+
 #include <display.h>
 class WifiHandler {
   private:

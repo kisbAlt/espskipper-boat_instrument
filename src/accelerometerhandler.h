@@ -1,3 +1,5 @@
+#pragma once
+
 class AccelerometerHandler {
 public:
   float lastPitch = 0;
