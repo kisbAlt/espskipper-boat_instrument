@@ -32,6 +32,7 @@ struct DisplaySettings
   u_int32_t fullRefreshTime = 2000;
   u_int16_t speedRefreshTime = 1000;
   u_int16_t speedGraphUpdate = 5000;
+  u_int16_t GPSUpdate = 1000;
   u_int16_t depthUpdate = 5000;
   int16_t depthOffset = 40; 
   Language language = ENGLISH;

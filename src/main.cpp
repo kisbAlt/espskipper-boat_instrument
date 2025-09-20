@@ -7,7 +7,6 @@ GpsHandler gpsHandler;
 WifiHandler wifiHandler;
 OpenEchoInterface openEchoInterface;
 
-
 // button PIN: 32
 #define BUTTON_PIN 32 // GPIO connected to button
 unsigned long lastDebounceTime = 0;
@@ -55,6 +54,7 @@ void setup()
 unsigned long lastSpeedUpdate = 0;
 unsigned long lastDisplayUpdate = 0;
 unsigned long lastDepthUpdate = 0;
+unsigned long lastGPSRead = 0;
 unsigned long lastTaskEnd = 0;
 unsigned long lastTaskStart = 0;
 unsigned long lastTaskDuration = 0;
@@ -63,7 +63,7 @@ bool gpsWasRefreshed = false;
 
 int handleClicks(unsigned long now)
 {
-  
+
   bool currentState = digitalRead(BUTTON_PIN);
 
   // Debounce check
@@ -143,22 +143,27 @@ void loop()
 {
   unsigned long now = millis();
 
-  // int clicks = handleClicks(now);
-  // if (clicks != 0)
-  // {
-  //   dispHandler.HandleButtonInput(clicks);
-  //   forceDispRefresh = true;
-  // }
+  int clicks = handleClicks(now);
+  if (clicks != 0)
+  {
+    dispHandler.HandleButtonInput(clicks);
+    forceDispRefresh = true;
+  }
 
-  // if (gpsHandler.GetGps())
-  // {
-  //   gpsWasRefreshed = true;
-  // }
+  if (forceDispRefresh || now - lastGPSRead >= dispHandler.dispSettings.GPSUpdate)
+  {
+    if (gpsHandler.GetGps())
+    {
+      gpsWasRefreshed = true;
+    }
+    lastGPSRead = now;
+  }
 
   startMeasure();
 
   if (forceDispRefresh || now - lastSpeedUpdate >= dispHandler.dispSettings.speedRefreshTime)
   {
+
     dispHandler.DrawDisplay1(gpsHandler.stats, gpsHandler.lastNumOfSatellites, now);
 
     gpsWasRefreshed = false;

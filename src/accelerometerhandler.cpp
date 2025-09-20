@@ -1,15 +1,11 @@
 #include <accelerometerhandler.h>
+#include <Arduino.h>
+#include "SparkFunLIS3DH.h"
+#include "Wire.h"
+#include "SPI.h"
 
-#include <Adafruit_MPU6050.h>
-#include <Adafruit_Sensor.h>
-#include <Wire.h>
-
-#define SDA_PIN 25
-#define SCL_PIN 26
-
-
-TwoWire I2C_MPU = TwoWire(1);  // Create a second I²C bus
-Adafruit_MPU6050 mpu;
+#define LIS3DH_CS 22
+LIS3DH SensorOne(SPI_MODE, 22);
 
 AccelerometerHandler::AccelerometerHandler()
 {
@@ -17,71 +13,64 @@ AccelerometerHandler::AccelerometerHandler()
 
 void AccelerometerHandler::Init()
 {
-    I2C_MPU.begin(SDA_PIN, SCL_PIN);
-    if (!mpu.begin(0x68, &I2C_MPU))
-    {
-        Serial.println("Failed to find MPU6050 chip");
-        while (1)
-        {
-            delay(10);
-        }
-    }
-    Serial.println("MPU6050 Found!");
+    Serial.println("Init lis3dh");
+    delay(1000); // relax...
+    Serial.println("Processor came out of reset.\n");
 
-    mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
-    Serial.print("Accelerometer range set to: ");
-    switch (mpu.getAccelerometerRange())
-    {
-    case MPU6050_RANGE_2_G:
-        Serial.println("+-2G");
-        break;
-    case MPU6050_RANGE_4_G:
-        Serial.println("+-4G");
-        break;
-    case MPU6050_RANGE_8_G:
-        Serial.println("+-8G");
-        break;
-    case MPU6050_RANGE_16_G:
-        Serial.println("+-16G");
-        break;
-    }
-    mpu.setGyroRange(MPU6050_RANGE_500_DEG);
-    Serial.print("Gyro range set to: ");
-    switch (mpu.getGyroRange())
-    {
-    case MPU6050_RANGE_250_DEG:
-        Serial.println("+- 250 deg/s");
-        break;
-    case MPU6050_RANGE_500_DEG:
-        Serial.println("+- 500 deg/s");
-        break;
-    case MPU6050_RANGE_1000_DEG:
-        Serial.println("+- 1000 deg/s");
-        break;
-    case MPU6050_RANGE_2000_DEG:
-        Serial.println("+- 2000 deg/s");
-        break;
-    }
+    SensorOne.settings.tempEnabled = 1;
+    SensorOne.settings.accelSampleRate = 10; // Hz.  Can be: 0,1,10,25,50,100,200,400,1600,5000 Hz
+    SensorOne.settings.accelRange = 2;       // Max G force readable.  Can be: 2, 4, 8, 16
 
-    mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
-
+    // Call .begin() to configure the IMUs
+    uint8_t returnData = 0;
+    SPI.begin();
+    returnData = SensorOne.begin();
+    if ((returnData != 0x00) && (returnData != 0xFF))
+    {
+        Serial.println("Problem starting the sensor with CS @ Pin 22.");
+    }
+    else
+    {
+        Serial.println("Sensor with CS @ Pin 22 started.");
+    }
 }
 
-void AccelerometerHandler::UpdateGyro() {
-    sensors_event_t a, g, temp;
-    mpu.getEvent(&a, &g, &temp);
+void AccelerometerHandler::UpdateGyro()
+{
+    SPI.beginTransaction(SPISettings(530000, MSBFIRST, SPI_MODE0));
+    digitalWrite(LIS3DH_CS, LOW);
 
-    Serial.print("Temperature: ");
-    Serial.print(temp.temperature);
-    Serial.println(" degC");
-    lastTemp = temp.temperature;
+    accelx = SensorOne.readFloatAccelX();
+    accely = SensorOne.readFloatAccelY();
+    accelz = SensorOne.readFloatAccelZ();
+    digitalWrite(LIS3DH_CS, HIGH);
+    SPI.endTransaction();
 
-    int16_t ax, ay, az;
-    int16_t gx, gy, gz;
+    lastPitch = -atan2(accelx / 9.8, accelz / 9.8) / 2 / 3.141592654 * 360;
+    lastRoll = -atan2(accely / 9.8, accelz / 9.8) / 2 / 3.141592654 * 360;
 
-    lastRoll = atan2(a.acceleration.y, a.acceleration.z) * 180 / PI;
-    lastPitch = atan2(-a.acceleration.x, sqrt(a.acceleration.y * a.acceleration.y + a.acceleration.z * a.acceleration.z)) * 180 / PI;
+    // Get all parameters
+    Serial.print("\nAccelerometer:\n");
+    // Serial.print(" X1 = ");
+    // Serial.println(accelx, 4);
+    // Serial.print(" Y1 = ");
+    // Serial.println(accely, 4);
+    // Serial.print(" Z1 = ");
+    // Serial.println(accelz, 4);
 
-    Serial.print("Pitch: "); Serial.print(lastPitch);
-    Serial.print(" Roll: "); Serial.println(lastRoll);
+    Serial.print(" lastPitch = ");
+    Serial.println(lastPitch);
+    Serial.print(" lastRoll = ");
+    Serial.println(lastRoll);
+
+    // int16_t temp = ((int16_t)SensorOne.read10bitADC3()) / 256;
+    // temp += 25;
+    // Serial.print(" TEMP = ");
+    // Serial.println(temp);
+
+    // Serial.print("\nSensorOne Bus Errors Reported:\n");
+    // Serial.print(" All '1's = ");
+    // Serial.println(SensorOne.allOnesCounter);
+    // Serial.print(" Non-success = ");
+    // Serial.println(SensorOne.nonSuccessCounter);
 }

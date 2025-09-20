@@ -1,6 +1,12 @@
 #pragma once
 
-class AccelerometerHandler {
+class AccelerometerHandler
+{
+private:
+  float accelx;
+  float accely;
+  float accelz;
+
 public:
   float lastPitch = 0;
   float lastRoll = 0;

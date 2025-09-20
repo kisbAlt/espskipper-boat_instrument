@@ -16,8 +16,8 @@
 #endif
 
 #define MOSFET_PIN 4
-#define DISP1_RESET 19
-#define DISP2_RESET 22
+#define DISP1_RESET 16
+#define DISP2_RESET 27
 
 Preferences preferences;
 const static StringTranslations eng_strings = {"AVG", "COURSE", "MAX", "DISTANCE", "KM/H", "KNOTS", "Satellites", "TEMP", "DEPTH", "Kilometers", "Celsius", "Meters", "Degrees", "Interval", "ROLL"};
@@ -26,12 +26,13 @@ const uint8_t TIMEZONE_SHIFT = 2;
 AccelerometerHandler accelerometer;
 const int MAX_GYRO_DRAWHEIGHT = 55;
 
-DisplayHandler::DisplayHandler() : display1(U8G2_R0, /* cs=*/ 5, /* reset=19*/ U8X8_PIN_NONE), display2(U8G2_R0, /* cs=*/ 21, /* reset=22*/ U8X8_PIN_NONE)
+DisplayHandler::DisplayHandler() : display1(U8G2_R0, /* cs=*/ 5, /* reset=16*/ U8X8_PIN_NONE), display2(U8G2_R0, /* cs=*/ 21, /* reset=27*/ U8X8_PIN_NONE)
 {
 }
 
 void DisplayHandler::Init()
 {
+    
     pinMode(DISP1_RESET, OUTPUT);
     pinMode(DISP2_RESET, OUTPUT);
     dispSettings.LoadData();
@@ -56,8 +57,8 @@ void DisplayHandler::Init()
     if(dispSettings.backlight_on){
         digitalWrite(MOSFET_PIN, HIGH);
     }
-
-    //accelerometer.Init();
+    
+    accelerometer.Init();
 }
 
 void DisplayHandler::PrepareDraw()
@@ -87,7 +88,7 @@ void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats,  u_int1
 {
 
     StringTranslations texts = getLangTranslations();
-
+    accelerometer.UpdateGyro();
     const char *speedUnitText = GetSpeedUnitText();
     dtostrf(stats.GetMaxSpeed(dispSettings.useKnots), 3, 1, maxBuf);
     dtostrf(stats.GetAvgSpeed(dispSettings.useKnots), 3, 1, avgBuf);

@@ -7,13 +7,15 @@ HardwareSerial gpsSerial(2); // UART1
 const float alpha = 0.1;
 
 // Define the RX and TX pins
-#define RXD2 17
-#define TXD2 16
+#define RXD2 35
+#define TXD2 13
 #define GPS_BAUD 9600
+#define GPS_BUFFER 1024
+
+#define FORCE_ON_PIN 12
 
 // If the dist between two GPS points is less than this value it wont be added to the distance travelled
 const float DISTANCE_THRESHOLD = 1.0; // meters
-
 
 float haversine(float lat1, float lon1, float lat2, float lon2)
 {
@@ -34,11 +36,39 @@ GpsHandler::GpsHandler()
 
 void GpsHandler::Init()
 {
+
+
     // Start Serial 2 with the defined RX and TX pins and a baud rate of 9600
     gpsSerial.end();
+    gpsSerial.setRxBufferSize(GPS_BUFFER);
     gpsSerial.begin(GPS_BAUD, SERIAL_8N1, RXD2, TXD2);
 
-    Serial.println("Serial 2 started at 9600 baud rate");
+    digitalWrite(FORCE_ON_PIN, HIGH); // force module on
+    delay(2000);
+
+    gpsSerial.println("$PMTK225,0*2B");
+
+    delay(100);
+
+    gpsSerial.println("$PMTK353,1,1,1,0,0*2A");
+
+    // Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
+    // Serial.println("Serial 2 started at 9600 baud rate");
+    // while (true)
+    // {
+    //     if (Serial2.available())
+    //     {
+    //         char c = Serial2.read();
+    //         Serial.write(c);
+    //     }
+    //     else
+    //     {
+    //         // Debug: show we're checking
+    //         // (don't leave this forever, just for testing)
+    //         // Serial.println("No data from L96...");
+    //         delay(500);
+    //     }
+    // }
 }
 
 void GpsHandler::RefreshStats()
@@ -61,17 +91,18 @@ bool GpsHandler::GetGps()
 {
     while (gpsSerial.available())
     {
-        gps.encode(gpsSerial.read());
+        char gpsRead = gpsSerial.read();
+        Serial.write(gpsRead);
+        gps.encode(gpsRead);
     }
-
     if (gps.location.isUpdated())
     {
-        // Serial.print("Satellites: ");
-        // Serial.println(gps.satellites.value());
-        // Serial.println();
-        // Serial.print("Speed km: ");
-        // Serial.println(gps.speed.kmph());
-        // Serial.println();
+        Serial.print("Satellites: ");
+        Serial.println(gps.satellites.value());
+        Serial.println();
+        Serial.print("Speed km: ");
+        Serial.println(gps.speed.kmph());
+        Serial.println();
 
         // Ignore the first time it run by checking lastLat value
         if (stats.lastLat != 0)
