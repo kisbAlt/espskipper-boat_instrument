@@ -2,8 +2,6 @@
 
 #include <Arduino.h>
 
-
-
 struct BoatStats
 {
 public:
@@ -19,7 +17,7 @@ public:
 
   u_int16_t lastCourse = 0;
   u_int32_t numberOfSamples = 1;
-
+  
   void Reset()
   {
     avgSpeedKmph = 0;
@@ -27,10 +25,10 @@ public:
     maxSpeedKmph = 0;
     numberOfSamples = 1;
   };
-  double GetLastSpeed(bool useKnots);
-  double GetMaxSpeed(bool useKnots);
-  double GetAvgSpeed(bool useKnots);
-  static double ConvertToKnots(double kmph);
+  double GetLastSpeed(const bool &useKnots) const;
+  double GetMaxSpeed(const bool &useKnots) const;
+  double GetAvgSpeed(const bool &useKnots) const;
+  static double ConvertToKnots(const double &kmph);
 };
 
 class GpsHandler
@@ -38,6 +36,8 @@ class GpsHandler
 private:
   void RefreshStats();
   bool firstRun = true;
+
+
 
 public:
   BoatStats stats;

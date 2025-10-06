@@ -28,9 +28,15 @@ ESP32 based, open source, low cost boat instrumentation to replace proprietary m
 
 **ESP32:** C++, U8g2lib, PlatformIO, Arduino Platform, HTML, 
 
+## Custom PCB
+
+Custom PCB in the works!
+
+![Housing1](./documentation/PCB1.png)
+![Housing2](./documentation/PCB2.png)
 
 
-## Screenshots
+## Instrument housing
 
 ![Housing1](./documentation/housing1.png)
 ![Housing2](./documentation/housing2.png)

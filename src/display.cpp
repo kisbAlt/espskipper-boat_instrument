@@ -18,20 +18,24 @@
 #define MOSFET_PIN 4
 #define DISP1_RESET 16
 #define DISP2_RESET 27
+#define MAX_GYRO_DRAWHEIGHT 55
 
 Preferences preferences;
 const static StringTranslations eng_strings = {"AVG", "COURSE", "MAX", "DISTANCE", "KM/H", "KNOTS", "Satellites", "TEMP", "DEPTH", "Kilometers", "Celsius", "Meters", "Degrees", "Interval", "ROLL"};
 const static StringTranslations hu_strings = {"ÁTLAG", "IRÁNY", "MAXIMUM", "TÁVOLSÁG", "KM/H", "CSOMÓ", "muhold", "HÕFOK", "MÉLYSÉG", "Kilóméter", "Celsius", "Méter", "Fok", "Idokoz", "DÕLÉS"};
 const uint8_t TIMEZONE_SHIFT = 2;
 AccelerometerHandler accelerometer;
-const int MAX_GYRO_DRAWHEIGHT = 55;
+
 
 DisplayHandler::DisplayHandler() : display1(U8G2_R0, /* cs=*/ 5, /* reset=16*/ U8X8_PIN_NONE), display2(U8G2_R0, /* cs=*/ 21, /* reset=27*/ U8X8_PIN_NONE)
 {
+    current_translation = eng_strings;
 }
 
 void DisplayHandler::Init()
 {
+
+    
     
     pinMode(DISP1_RESET, OUTPUT);
     pinMode(DISP2_RESET, OUTPUT);
@@ -84,7 +88,7 @@ char distBuf[10];
 char courseBuf[4];
 char depthBuf[6];
 char tempBuf[4];
-void DisplayHandler::DrawDisplay2(u_int32_t satellites, BoatStats stats,  u_int16_t depth)
+void DisplayHandler::DrawDisplay2(const u_int32_t &satellites,const BoatStats &stats,const u_int16_t &depth)
 {
 
     StringTranslations texts = getLangTranslations();
@@ -219,8 +223,6 @@ void DisplayHandler::DrawSummary()
 
 void DisplayHandler::DrawGyro()
 {
-    accelerometer.UpdateGyro();
-
     StringTranslations texts = getLangTranslations();
     display2.setFont(u8g2_font_6x12_t_symbols);
 
@@ -228,7 +230,7 @@ void DisplayHandler::DrawGyro()
     int x = (128 - textWidth) / 2;
     display2.drawUTF8(x, 0, texts.Roll);
 
-    int rolldisplay = 180 - (int)round(fabs(accelerometer.lastRoll));
+    int rolldisplay = (int)round(fabs(accelerometer.lastRoll));
     display2.setFont(u8g2_font_9x15_t_symbols);
     sprintf(rollBuf, "%d°", rolldisplay);
     display2.drawUTF8(0, 0, rollBuf);
@@ -275,7 +277,7 @@ void DisplayHandler::DrawUIBox()
     display2.drawLine(0, 31, 128, 31);
 }
 
-void DisplayHandler::DrawDisplay1(BoatStats stats, u_int32_t satellites, unsigned long now)
+void DisplayHandler::DrawDisplay1(const BoatStats &stats, const u_int32_t &satellites, const unsigned long &now)
 {
 
     double speed = stats.GetLastSpeed(dispSettings.useKnots);
@@ -345,7 +347,7 @@ const StringTranslations &DisplayHandler::getLangTranslations()
 }
 
 // Click counts, -1 value is long press
-void DisplayHandler::HandleButtonInput(int clickCount)
+void DisplayHandler::HandleButtonInput(const int &clickCount)
 {
     if (clickCount == 1)
     {
@@ -423,8 +425,10 @@ void DisplaySettings::LoadData()
     }
     if (preferences.isKey("lastdisp"))
     {
-        //display2State = static_cast<DisplayState>(preferences.getInt("lastdisp", SUMMARY));
-        display2State = SUMMARY;
+        display2State = static_cast<DisplayState>(preferences.getInt("lastdisp", SUMMARY));
+
+        // DEBUG:
+        //display2State = SUMMARY;
     }
     if (preferences.isKey("graphu"))
     {

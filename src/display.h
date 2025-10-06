@@ -82,6 +82,7 @@ private:
   char speedBuffer[10];
   char rollBuf[10];
   int cpu_temp_celsius = 0;
+  StringTranslations&& current_translation;
   
   const char* GetSpeedUnitText();
   double speedHistory[SPEED_HISTORY_COUNT];
@@ -97,7 +98,7 @@ public:
   DisplayHandler();
   DisplaySettings dispSettings;
   void Init();
-  void DrawDisplay2(u_int32_t satellites, BoatStats stats, u_int16_t depth);
-  void DrawDisplay1(BoatStats stats, u_int32_t satellites, unsigned long now);
-  void HandleButtonInput(int clickCount);
+  void DrawDisplay2(const u_int32_t &satellites, const BoatStats &stats, const u_int16_t &depth);
+  void DrawDisplay1(const BoatStats &stats, const u_int32_t &satellites, const unsigned long &now);
+  void HandleButtonInput(const int &clickCount);
 };
